@@ -1,94 +1,169 @@
-// src/pages/dashboard/Profile.jsx
 import {
   Card,
   CardBody,
-  CardHeader,
-  CardFooter,
   Typography,
   Button,
+  Spinner,
+  IconButton,
+  Tooltip,
 } from "@material-tailwind/react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 import ProductService from "@/services/product/ProductService";
 
 export function Profile() {
-  const [products, setProducts] = useState([]); 
-  const [loading, setLoading] = useState(true); 
-  const [error, setError] = useState(null);     
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const location = useLocation();
 
+  // ✅ Lấy danh sách sản phẩm
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await ProductService.getAllProducts();
+      setProducts(data || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const data = await ProductService.getAllProducts();
-        setProducts(data || []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProducts();
   }, []);
 
-  // Nếu đang ở /products/create hoặc /products/:id -> render Outlet (ProductCreate hoặc ProductDetail)
-  if (location.pathname.includes("/products/create") || location.pathname.match(/\/products\/\d+$/)) {
+  // ✅ Khi thêm mới từ trang Create
+  useEffect(() => {
+    if (location.state?.newProduct) {
+      setProducts((prev) => [location.state.newProduct, ...prev]);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // ✅ Khi bấm Edit hoặc Create → render Outlet
+  if (
+    location.pathname.includes("/products/create") ||
+    location.pathname.match(/\/products\/\d+$/) ||
+    location.pathname.includes("/products/update")
+  ) {
     return <Outlet />;
   }
 
-  if (loading) return <p className="p-6">Loading...</p>;
-  if (error) return <p className="p-6 text-red-500">Error: {error}</p>;
+  // ✅ Hàm xóa sản phẩm
+  const handleDelete = async (id) => {
+    const confirm = window.confirm("Bạn có chắc muốn xóa sản phẩm này không?");
+    if (!confirm) return;
+
+    try {
+      await ProductService.deleteProduct(id);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      alert("Đã xóa sản phẩm thành công!");
+    } catch (err) {
+      alert("Lỗi khi xóa sản phẩm: " + err);
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spinner className="h-12 w-12 text-blue-500" />
+      </div>
+    );
+
+  if (error)
+    return (
+      <p className="p-6 text-red-500 font-medium text-lg">Error: {error}</p>
+    );
 
   return (
     <div className="p-6">
-      {/* Nút Create Product */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <Typography variant="h4" color="blue-gray">
-          Product List
+        <Typography variant="h4" color="blue-gray" className="font-bold">
+          Product Management
         </Typography>
         <Link to="create">
           <Button color="blue">+ Create Product</Button>
         </Link>
       </div>
 
-      {/* Danh sách sản phẩm */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {products.map(({ id, mainImageUrl, name, description, price }) => (
-          <Card
-            key={id}
-            className="shadow-lg border border-blue-gray-100"
-          >
-            <CardHeader floated={false} className="h-48">
-              <img
-                src={mainImageUrl || "/img/placeholder.png"}
-                alt={name}
-                className="h-full w-full object-cover"
-              />
-            </CardHeader>
-            <CardBody>
-              <Typography variant="h5" color="blue-gray" className="mb-2">
-                {name}
-              </Typography>
-              <Typography
-                variant="small"
-                className="font-normal text-blue-gray-600 mb-2"
-              >
-                {description}
-              </Typography>
-              <Typography color="green" className="font-semibold">
-                {price} ₫
-              </Typography>
-            </CardBody>
-            <CardFooter className="flex justify-end">
-              <Link to={`${id}`}>
-                <Button variant="outlined" size="sm">
-                  View Details
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      {/* Product Table */}
+      <Card className="shadow-lg border border-blue-gray-100">
+        <CardBody className="overflow-x-auto p-0">
+          <table className="w-full min-w-max table-auto text-left">
+            <thead>
+              <tr className="bg-blue-gray-50">
+                <th className="p-4">Image</th>
+                <th className="p-4">Name</th>
+                <th className="p-4">Description</th>
+                <th className="p-4">Price</th>
+                <th className="p-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center p-6 text-gray-500">
+                    No products found.
+                  </td>
+                </tr>
+              ) : (
+                products.map(
+                  ({ id, mainImageUrl, name, description, price }, index) => (
+                    <tr
+                      key={id}
+                      className={`border-b border-blue-gray-50 ${
+                        index % 2 === 0 ? "bg-white" : "bg-blue-gray-50/30"
+                      }`}
+                    >
+                      <td className="p-4">
+                        <img
+                          src={mainImageUrl || "/img/placeholder.png"}
+                          alt={name}
+                          className="h-14 w-14 object-cover rounded-lg border"
+                        />
+                      </td>
+                      <td className="p-4 font-semibold">{name}</td>
+                      <td className="p-4 text-sm text-blue-gray-600 max-w-xs truncate">
+                        {description}
+                      </td>
+                      <td className="p-4 text-green-600 font-bold">{price} ₫</td>
+                      <td className="p-4 text-center flex justify-center gap-3">
+                        <Tooltip content="View Details">
+                          <Link to={`${id}`}>
+                            <IconButton variant="text" color="blue">
+                              <EyeIcon className="h-5 w-5" />
+                            </IconButton>
+                          </Link>
+                        </Tooltip>
+                        <Tooltip content="Edit">
+                          <Link to={`update/${id}`}>
+                            <IconButton variant="text" color="green">
+                              <PencilIcon className="h-5 w-5" />
+                            </IconButton>
+                          </Link>
+                        </Tooltip>
+                        <Tooltip content="Delete">
+                          <IconButton
+                            variant="text"
+                            color="red"
+                            onClick={() => handleDelete(id)}
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </IconButton>
+                        </Tooltip>
+                      </td>
+                    </tr>
+                  )
+                )
+              )}
+            </tbody>
+          </table>
+        </CardBody>
+      </Card>
     </div>
   );
 }

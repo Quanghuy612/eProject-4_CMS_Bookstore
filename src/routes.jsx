@@ -9,7 +9,9 @@ import {
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import ProductCreate from "./pages/product/ProductCreate";
 import ProductDetail from "./pages/product/ProductDetail";
+import UpdateProduct from "./pages/product/UpdateProduct";
 import { SignIn } from "@/pages/auth";
+import { element } from "prop-types";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -41,6 +43,10 @@ export const routes = [
             path: ":id", 
             element: <ProductDetail />,
           },
+          { name: "Edit Product",
+            path: "update/:id",
+            element: <UpdateProduct />,
+          }
         ],
       },
       {
