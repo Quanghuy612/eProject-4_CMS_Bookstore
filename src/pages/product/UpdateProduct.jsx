@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import ProductService from "@/services/product/ProductService";
-import { useNavigate } from "react-router-dom";
-const UpdateProduct = ({ productId, onUpdated }) => {
+import { useNavigate, useParams } from "react-router-dom";
+
+const UpdateProduct = ({ onUpdated }) => {
   const navigate = useNavigate();
+  const { id: productId } = useParams();
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -15,11 +18,12 @@ const UpdateProduct = ({ productId, onUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // ✅ Lấy thông tin sản phẩm hiện tại để hiển thị vào form
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const data = await ProductService.getProductDetails(productId);
+        const res = await ProductService.updateProduct(productId);
+        const data = res?.data || res; 
+
         setFormData({
           name: data.name || "",
           description: data.description || "",
@@ -29,13 +33,12 @@ const UpdateProduct = ({ productId, onUpdated }) => {
           active: data.active ?? true,
         });
       } catch (error) {
-        setMessage(`❌ Lỗi tải sản phẩm: ${error}`);
+        setMessage(` Lỗi tải sản phẩm: ${error.message}`);
       }
     };
     if (productId) fetchProduct();
   }, [productId]);
 
-  // ✅ Xử lý cập nhật
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -44,16 +47,17 @@ const UpdateProduct = ({ productId, onUpdated }) => {
     try {
       await ProductService.updateProduct(productId, formData);
       setMessage("✅ Cập nhật sản phẩm thành công!");
-      navigate("/dashboard/products");
-      if (onUpdated) onUpdated(); // callback reload list nếu cần
+      navigate("/dashboard/products", { replace: true });
+      setTimeout(() => window.location.reload(), 300);
+      
+      if (onUpdated) onUpdated();
     } catch (error) {
-      setMessage(`❌ Lỗi cập nhật: ${error}`);
+      setMessage(`❌ Lỗi cập nhật: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Xử lý thay đổi input
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
