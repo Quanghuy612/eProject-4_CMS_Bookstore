@@ -5,13 +5,16 @@ import {
   InformationCircleIcon,
   ServerStackIcon,
   RectangleStackIcon,
-} from "@heroicons/react/24/solid";
+  TagIcon,
+  CubeIcon,
+} from "@heroicons/react/24/solid"; 
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import ProductCreate from "./pages/product/ProductCreate";
 import ProductDetail from "./pages/product/ProductDetail";
 import UpdateProduct from "./pages/product/UpdateProduct";
+import CategoryManager from "./pages/category/CategoryManager";
+import TagManager from "./pages/tag/TagManager";
 import { SignIn } from "@/pages/auth";
-import { element } from "prop-types";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -28,7 +31,7 @@ export const routes = [
         element: <Home />,
       },
       {
-        icon: <UserCircleIcon {...icon} />,
+        icon: <CubeIcon {...icon} />,
         name: "Product Management",
         path: "/products", 
         element: <Profile />,
@@ -43,11 +46,24 @@ export const routes = [
             path: ":id", 
             element: <ProductDetail />,
           },
-          { name: "Edit Product",
+          { 
+            name: "Edit Product",
             path: "update/:id",
             element: <UpdateProduct />,
           }
         ],
+      },
+      {
+        icon: <RectangleStackIcon {...icon} />,
+        name: "Category Management",
+        path: "/category",
+        element: <CategoryManager />,
+      },
+      {
+        icon: <TagIcon {...icon} />,
+        name: "Tag Management",
+        path: "/tag",
+        element: <TagManager />,
       },
       {
         icon: <TableCellsIcon {...icon} />,
@@ -63,14 +79,13 @@ export const routes = [
       },
     ],
   },
-
   {
     title: "auth pages",
     layout: "auth",
     pages: [
       {
         icon: <ServerStackIcon {...icon} />,
-        name: "sign in",
+        name: "Sign In",
         path: "/sign-in",
         element: <SignIn />,
       },
