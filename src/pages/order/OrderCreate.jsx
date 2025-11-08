@@ -31,9 +31,13 @@ export function OrderCreate() {
   const fetchProducts = async () => {
     try {
       const data = await ProductService.getAllProducts();
-      setProducts(data);
+      console.log("Products data from API:", data);
+      console.log("Is array?", Array.isArray(data));
+      // Đảm bảo data là array
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching products:", err);
+      setProducts([]); // Set empty array on error
     }
   };
 

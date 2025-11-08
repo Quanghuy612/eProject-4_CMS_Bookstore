@@ -64,7 +64,7 @@ export function OrderList() {
             <Typography variant="h6" color="white">
               Order Management
             </Typography>
-            <Link to="/orders/create">
+            <Link to="/dashboard/orders/create">
               <Button color="white" size="sm">
                 Create Order
               </Button>

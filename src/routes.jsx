@@ -71,13 +71,13 @@ export const routes = [
         icon: <ShoppingCartIcon {...icon} />,
         name: "Order Management",
         path: "/orders",
-        element: <OrderList />,
+        element: <OrdersWrapper />,
         children: [
-          // {
-          //   name: "Order List",
-          //   path: "",
-          //   element: <OrderList />,
-          // },
+          {
+            name: "Order List",
+            path: "",
+            element: <OrderList />,
+          },
           {
             name: "Create Order",
             path: "create",

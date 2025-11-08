@@ -15,8 +15,13 @@ const OrderService = {
   async getMyOrders() {
     try {
       const response = await baseApi.get("/orders");
+      console.log("Full orders API response:", response);
+      console.log("response.data:", response.data);
+      console.log("response.data.data:", response.data?.data);
       // Backend trả về ResponseDTO với data bên trong
       const data = response.data?.data || response.data;
+      console.log("Final data:", data);
+      console.log("Is array?", Array.isArray(data));
       // Đảm bảo trả về array
       return Array.isArray(data) ? data : [];
     } catch (error) {

@@ -4,9 +4,11 @@
     // Lấy tất cả sản phẩm
     async getAllProducts() {
       try {
-        const response = await baseApi.get("/cms/products/get/all");
+        const response = await baseApi.get("/products");
+        console.log("Full API response:", response);
         return response.data?.data || response.data;
       } catch (error) {
+        console.error("ProductService.getAllProducts error:", error);
         throw new Error(error.response?.data?.message || error.message);
       }
     },
