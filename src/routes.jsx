@@ -7,6 +7,7 @@ import {
   RectangleStackIcon,
   TagIcon,
   CubeIcon,
+  ShoppingCartIcon,
 } from "@heroicons/react/24/solid"; 
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import ProductCreate from "./pages/product/ProductCreate";
@@ -14,6 +15,7 @@ import ProductDetail from "./pages/product/ProductDetail";
 import UpdateProduct from "./pages/product/UpdateProduct";
 import CategoryManager from "./pages/category/CategoryManager";
 import TagManager from "./pages/tag/TagManager";
+import { OrderList, OrderDetail, OrderCreate, OrdersWrapper } from "./pages/order";
 import { SignIn } from "@/pages/auth";
 
 const icon = {
@@ -64,6 +66,29 @@ export const routes = [
         name: "Tag Management",
         path: "/tag",
         element: <TagManager />,
+      },
+      {
+        icon: <ShoppingCartIcon {...icon} />,
+        name: "Order Management",
+        path: "/orders",
+        element: <OrderList />,
+        children: [
+          // {
+          //   name: "Order List",
+          //   path: "",
+          //   element: <OrderList />,
+          // },
+          {
+            name: "Create Order",
+            path: "create",
+            element: <OrderCreate />,
+          },
+          {
+            name: "Order Detail",
+            path: ":id",
+            element: <OrderDetail />,
+          },
+        ],
       },
       {
         icon: <TableCellsIcon {...icon} />,
