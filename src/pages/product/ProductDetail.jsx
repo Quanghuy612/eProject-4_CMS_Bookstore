@@ -312,12 +312,96 @@ export function ProductDetail() {
     );
   };
 
+  // Hàm hiển thị tags
+  const renderTags = () => {
+    const tags = product.tagIds || [];
+    
+    if (tags.length === 0) {
+      return (
+        <div className="text-center py-6">
+          <TagIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+          <Typography variant="small" color="gray" className="italic">
+            Sản phẩm chưa được gắn tag
+          </Typography>
+        </div>
+      );
+    }
+
+    return (
+       <div className="space-y-4">
+      {/* Danh sách tags dạng chips */}
+      <div className="flex flex-wrap gap-2">
+        {tags.map((tag, index) => (
+          <Tooltip key={tag.id || index} content={`ID: ${tag.id}`}>
+            <Chip
+              value={tag.name} // chỉ dùng tag.name
+              color="green"
+              variant="gradient"
+              className="rounded-full font-medium transition-all hover:scale-105 cursor-pointer"
+              icon={<TagIcon className="h-3 w-3" />}
+            />
+          </Tooltip>
+        ))}
+      </div>
+
+        {/* Thống kê tags */}
+        <div className="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+          <div className="flex items-center gap-2">
+            <TagIcon className="h-4 w-4 text-green-500" />
+            <Typography variant="small" color="blue-gray" className="font-semibold">
+              Tổng số tags
+            </Typography>
+          </div>
+          <Badge color="green" content={tags.length} />
+        </div>
+
+        {/* Chi tiết từng tag */}
+        <div className="space-y-2">
+          <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
+            Chi tiết tags:
+          </Typography>
+          {tags.map((tag, index) => {
+            const tagName = tag.name || tag.tagName || `Tag ${index + 1}`;
+            // const tagDescription = tag.description || "Không có mô tả";
+            
+            return (
+              <div 
+                key={tag.id || index}
+                className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-100 hover:border-green-300 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <TagIcon className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div>
+                    <Typography variant="small" className="font-semibold text-green-700">
+                      {tagName}
+                    </Typography>
+                    {/* <Typography variant="small" color="gray" className="text-xs">
+                      {tagDescription}
+                    </Typography> */}
+                  </div>
+                </div>
+                {/* <Typography variant="small" color="gray" className="font-mono">
+                  #{tag.id}
+                </Typography> */}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const getCategoriesCount = () => {
     const categories = product.categories || product.categoryList || [];
     return flattenCategories(categories);
   };
 
-  // ... (phần còn lại của component giữ nguyên)
+  const getTagsCount = () => {
+    const tags = product.tagIds || [];
+    return tags.length;
+  };
 
   if (loading) {
     return (
@@ -407,8 +491,6 @@ export function ProductDetail() {
     );
   }
 
-  // ... (các hàm formatCurrency, getStockStatus, getSoldPercentage giữ nguyên)
-
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -462,7 +544,7 @@ export function ProductDetail() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header - giữ nguyên */}
+        {/* Header */}
         <Card className="shadow-2xl border-0 mb-8 bg-gradient-to-r from-blue-700 to-indigo-800 overflow-hidden">
           <div className="absolute inset-0 bg-black/10"></div>
           <CardBody className="p-8 relative">
@@ -514,7 +596,7 @@ export function ProductDetail() {
           {/* Main Content */}
           <div className="xl:col-span-3">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Product Image & Basic Info - giữ nguyên */}
+              {/* Product Image & Basic Info */}
               <div className="lg:col-span-1">
                 <Card className="shadow-xl border-0 h-full">
                   <CardBody className="p-6">
@@ -578,9 +660,9 @@ export function ProductDetail() {
                 </Card>
               </div>
 
-              {/* Stats & Categories */}
+              {/* Stats & Categories & Tags */}
               <div className="lg:col-span-2 space-y-8">
-                {/* Statistics Cards - giữ nguyên */}
+                {/* Statistics Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-shadow">
                     <CardBody className="p-4">
@@ -650,7 +732,7 @@ export function ProductDetail() {
                   </Card>
                 </div>
 
-                {/* Categories - ĐÃ ĐƯỢC CẬP NHẬT */}
+                {/* Categories */}
                 <Card className="shadow-xl border-0">
                   <CardBody className="p-6">
                     <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
@@ -661,7 +743,18 @@ export function ProductDetail() {
                   </CardBody>
                 </Card>
 
-                {/* Description - giữ nguyên */}
+                {/* Tags - PHẦN MỚI THÊM */}
+                <Card className="shadow-xl border-0">
+                  <CardBody className="p-6">
+                    <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
+                      <TagIcon className="h-5 w-5 text-green-500" />
+                      Tags sản phẩm
+                    </Typography>
+                    {renderTags()}
+                  </CardBody>
+                </Card>
+
+                {/* Description */}
                 <Card className="shadow-xl border-0">
                   <CardBody className="p-6">
                     <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
@@ -679,7 +772,7 @@ export function ProductDetail() {
             </div>
           </div>
 
-          {/* Sidebar - giữ nguyên */}
+          {/* Sidebar */}
           <div className="xl:col-span-1">
             <Card className="shadow-2xl border-0 sticky top-6 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-700 opacity-5"></div>
@@ -695,6 +788,7 @@ export function ProductDetail() {
                     { icon: HashtagIcon, label: "ID sản phẩm", value: `#${product.id}`, color: "blue" },
                     { icon: ArchiveBoxIcon, label: "Tồn kho", value: product.quantity || 0, color: "blue" },
                     { icon: FolderIcon, label: "Danh mục", value: getCategoriesCount(), color: "purple" },
+                    { icon: TagIcon, label: "Tags", value: getTagsCount(), color: "green" },
                     { icon: CalendarDaysIcon, label: "Ngày tạo", value: product.createdAt ? new Date(product.createdAt).toLocaleDateString('vi-VN') : 'N/A', color: "gray" },
                     { icon: ClockIcon, label: "Cập nhật", value: product.updatedAt ? new Date(product.updatedAt).toLocaleDateString('vi-VN') : 'N/A', color: "gray" },
                   ].map((item, index) => (

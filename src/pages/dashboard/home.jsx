@@ -31,9 +31,10 @@ import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
 export function Home() {
   const token = localStorage.getItem("token");
 
-  if (!token) {
+  if (token === null) {
     return <Navigate to="/auth/sign-in" replace />;
   }
+
 
   return (
     <div className="mt-12">
