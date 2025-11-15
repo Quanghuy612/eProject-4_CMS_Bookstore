@@ -329,7 +329,8 @@ const UpdateProduct = () => {
       setMessageType("success");
       
       setTimeout(() => {
-        navigate("/dashboard/products", { replace: true });
+        navigate("/dashboard/products", { state: { reload: true }, replace: true });
+        window.location.reload();
       }, 300);
     } catch (error) {
       console.error("❌ Error updating product:", error);

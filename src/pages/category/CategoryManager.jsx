@@ -257,7 +257,7 @@ const CategoryManager = () => {
       setTimeout(() => {
         fetchCategories();
         setMessage("");
-      }, 2000);
+      }, 300);
 
     } catch (error) {
       console.error("Error creating category:", error);
