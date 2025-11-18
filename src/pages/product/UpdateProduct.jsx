@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ProductService from "@/services/product/ProductService";
 import categoryService from "@/services/category/CategoryService";
+import tagService from "@/services/tags/TagService";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Card,
@@ -13,8 +14,6 @@ import {
   Spinner,
   Alert,
   Chip,
-  Select,
-  Option,
   Dialog,
   DialogHeader,
   DialogBody,
@@ -30,9 +29,11 @@ import {
   CheckBadgeIcon,
   TagIcon,
   PlusIcon,
+  XMarkIcon,
+  FolderIcon,
 } from "@heroicons/react/24/outline";
 
-const UpdateProduct = ({ onUpdated }) => {
+const UpdateProduct = () => {
   const navigate = useNavigate();
   const { id: productId } = useParams();
 
@@ -44,18 +45,47 @@ const UpdateProduct = ({ onUpdated }) => {
     mainImageUrl: "",
     active: true,
     categoryIds: [],
+    tagIds: [],
   });
 
   const [categories, setCategories] = useState([]);
+  const [flattenedCategories, setFlattenedCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [fetchingCategories, setFetchingCategories] = useState(true);
+  const [fetchingTags, setFetchingTags] = useState(true);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
   const [imagePreview, setImagePreview] = useState("");
   const [categoryDialog, setCategoryDialog] = useState(false);
+  const [tagDialog, setTagDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newTagName, setNewTagName] = useState("");
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const [creatingTag, setCreatingTag] = useState(false);
+
+  // 🔄 Hàm làm phẳng cấu trúc danh mục để hiển thị phân cấp
+  const flattenCategories = (categories, level = 0, parentName = "") => {
+    let result = [];
+    
+    categories.forEach(category => {
+      // Thêm danh mục cha
+      result.push({
+        ...category,
+        level,
+        displayName: `${"─ ".repeat(level)}${category.name}`,
+        fullPath: parentName ? `${parentName} › ${category.name}` : category.name
+      });
+      
+      // Thêm danh mục con nếu có
+      if (category.children && category.children.length > 0) {
+        result = result.concat(flattenCategories(category.children, level + 1, category.name));
+      }
+    });
+    
+    return result;
+  };
 
   // Load categories
   useEffect(() => {
@@ -64,16 +94,23 @@ const UpdateProduct = ({ onUpdated }) => {
         setFetchingCategories(true);
         const res = await categoryService.getAllCategories();
         
+        let categoriesData = [];
         if (Array.isArray(res)) {
-          setCategories(res);
+          categoriesData = res;
         } else if (Array.isArray(res?.data)) {
-          setCategories(res.data);
+          categoriesData = res.data;
         } else if (Array.isArray(res?.data?.data)) {
-          setCategories(res.data.data);
+          categoriesData = res.data.data;
         } else {
           console.warn("⚠️ Dữ liệu category không đúng định dạng:", res);
-          setCategories([]);
+          categoriesData = [];
         }
+        
+        setCategories(categoriesData);
+        
+        // Làm phẳng danh sách category để hiển thị phân cấp
+        const flattened = flattenCategories(categoriesData);
+        setFlattenedCategories(flattened);
       } catch (err) {
         console.error("❌ Error fetching categories:", err);
         setMessage("Không thể tải danh mục sản phẩm!");
@@ -86,6 +123,38 @@ const UpdateProduct = ({ onUpdated }) => {
     fetchCategories();
   }, []);
 
+  // Load tags
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        setFetchingTags(true);
+        const res = await tagService.getAllTags();
+        
+        let tagsData = [];
+        if (Array.isArray(res)) {
+          tagsData = res;
+        } else if (Array.isArray(res?.data)) {
+          tagsData = res.data;
+        } else if (Array.isArray(res?.data?.data)) {
+          tagsData = res.data.data;
+        } else {
+          console.warn("⚠️ Dữ liệu tag không đúng định dạng:", res);
+          tagsData = [];
+        }
+        
+        setTags(tagsData);
+      } catch (err) {
+        console.error("❌ Error fetching tags:", err);
+        setMessage("Không thể tải tags!");
+        setMessageType("error");
+      } finally {
+        setFetchingTags(false);
+      }
+    };
+
+    fetchTags();
+  }, []);
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -93,9 +162,19 @@ const UpdateProduct = ({ onUpdated }) => {
         const res = await ProductService.getProductDetails(productId);
         const data = res?.data || res; 
 
-        // Xử lý categories từ sản phẩm
+        console.log("📦 Product data:", data);
+
         const productCategories = data.categories || data.categoryList || [];
-        const categoryIds = productCategories.map(cat => cat.id).filter(id => id != null);
+        const categoryIds = productCategories
+          .map(cat => cat?.id || cat?.categoryId)
+          .filter(id => id != null && id !== undefined)
+          .map(id => String(id));
+
+        const productTags = data.tags || [];
+        const tagIds = productTags
+          .map(tag => tag?.id || tag?.tagId)
+          .filter(id => id != null && id !== undefined)
+          .map(id => String(id));
 
         setFormData({
           name: data.name || "",
@@ -105,16 +184,19 @@ const UpdateProduct = ({ onUpdated }) => {
           mainImageUrl: data.mainImageUrl || "",
           active: data.active ?? true,
           categoryIds: categoryIds,
+          tagIds: tagIds,
         });
 
         setImagePreview(data.mainImageUrl || "");
       } catch (error) {
+        console.error("❌ Error fetching product:", error);
         setMessage(`Lỗi tải sản phẩm: ${error.message}`);
         setMessageType("error");
       } finally {
         setFetching(false);
       }
     };
+    
     if (productId) fetchProduct();
   }, [productId]);
 
@@ -137,15 +219,18 @@ const UpdateProduct = ({ onUpdated }) => {
         throw new Error("Không nhận được ID category từ server");
       }
 
-      // Thêm category mới vào danh sách
-      setCategories((prev) => [...prev, newCat]);
+      // Cập nhật danh sách categories và làm phẳng lại
+      const updatedCategories = [...categories, newCat];
+      setCategories(updatedCategories);
+      const flattened = flattenCategories(updatedCategories);
+      setFlattenedCategories(flattened);
+      
       setNewCategoryName("");
       setCategoryDialog(false);
 
-      // Tự động chọn category mới tạo
       setFormData(prev => ({
         ...prev,
-        categoryIds: [...prev.categoryIds, newCat.id]
+        categoryIds: [...prev.categoryIds, String(newCat.id)]
       }));
 
       setMessage("Tạo danh mục mới thành công!");
@@ -159,10 +244,71 @@ const UpdateProduct = ({ onUpdated }) => {
     }
   };
 
+  // Tạo tag mới
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) {
+      setMessage("Vui lòng nhập tên tag!");
+      setMessageType("error");
+      return;
+    }
+
+    try {
+      setCreatingTag(true);
+      const payload = { name: newTagName.trim() };
+      const res = await tagService.createTag(payload);
+
+      const newTag = res?.data?.data || res?.data || res;
+
+      if (!newTag || !newTag.id) {
+        throw new Error("Không nhận được ID tag từ server");
+      }
+
+      setTags((prev) => [...prev, newTag]);
+      setNewTagName("");
+      setTagDialog(false);
+
+      setFormData(prev => ({
+        ...prev,
+        tagIds: [...prev.tagIds, String(newTag.id)]
+      }));
+
+      setMessage("Tạo tag mới thành công!");
+      setMessageType("success");
+    } catch (err) {
+      console.error("❌ Lỗi khi tạo tag:", err);
+      setMessage("Tạo tag thất bại: " + err.message);
+      setMessageType("error");
+    } finally {
+      setCreatingTag(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    // Validation
+    if (!formData.name.trim()) {
+      setMessage("Vui lòng nhập tên sản phẩm!");
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.price || Number(formData.price) <= 0) {
+      setMessage("Vui lòng nhập giá sản phẩm hợp lệ!");
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.quantity || Number(formData.quantity) < 0) {
+      setMessage("Vui lòng nhập số lượng hợp lệ!");
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
 
     try {
       const payload = {
@@ -173,16 +319,22 @@ const UpdateProduct = ({ onUpdated }) => {
         mainImageUrl: formData.mainImageUrl,
         active: formData.active,
         categoryIds: formData.categoryIds.map(id => Number(id)),
+        tagIds: formData.tagIds.map(id => Number(id)),
       };
 
+      console.log("📤 Payload:", payload);
+
       await ProductService.updateProduct(productId, payload);
-      setMessage("Cập nhật sản phẩm thành công!");
+      setMessage("✅ Cập nhật sản phẩm thành công!");
       setMessageType("success");
       
-       navigate("/dashboard/products", { replace: true });
-      setTimeout(() => window.location.reload(), 300);
+      setTimeout(() => {
+        navigate("/dashboard/products", { state: { reload: true }, replace: true });
+        window.location.reload();
+      }, 300);
     } catch (error) {
-      setMessage(`Lỗi cập nhật: ${error.message}`);
+      console.error("❌ Error updating product:", error);
+      setMessage(`❌ Lỗi cập nhật: ${error.response?.data?.message || error.message}`);
       setMessageType("error");
     } finally {
       setLoading(false);
@@ -196,15 +348,35 @@ const UpdateProduct = ({ onUpdated }) => {
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    // Preview image khi URL thay đổi
     if (name === "mainImageUrl") {
       setImagePreview(value);
     }
   };
 
-  // Xử lý chọn danh mục
-  const handleCategoryChange = (value) => {
-    setFormData({ ...formData, categoryIds: value });
+  const handleCategoryChange = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions);
+    const selectedIds = selectedOptions.map(option => option.value);
+    setFormData(prev => ({ ...prev, categoryIds: selectedIds }));
+  };
+
+  const handleTagChange = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions);
+    const selectedIds = selectedOptions.map(option => option.value);
+    setFormData(prev => ({ ...prev, tagIds: selectedIds }));
+  };
+
+  const removeCategory = (categoryIdToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      categoryIds: prev.categoryIds.filter(id => id !== categoryIdToRemove)
+    }));
+  };
+
+  const removeTag = (tagIdToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      tagIds: prev.tagIds.filter(id => id !== tagIdToRemove)
+    }));
   };
 
   const formatCurrency = (amount) => {
@@ -214,9 +386,12 @@ const UpdateProduct = ({ onUpdated }) => {
     }).format(amount || 0);
   };
 
-  // Lấy danh sách categories đã chọn
-  const selectedCategories = categories.filter(cat => 
-    formData.categoryIds.includes(cat.id)
+  const selectedCategories = flattenedCategories.filter(cat => 
+    formData.categoryIds.includes(String(cat.id))
+  );
+
+  const selectedTags = tags.filter(tag => 
+    formData.tagIds.includes(String(tag.id))
   );
 
   if (fetching) {
@@ -237,7 +412,7 @@ const UpdateProduct = ({ onUpdated }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <Card className="shadow-xl border-0 mb-8 bg-gradient-to-r from-blue-600 to-indigo-600">
           <CardBody className="p-8">
@@ -307,7 +482,6 @@ const UpdateProduct = ({ onUpdated }) => {
                       placeholder="Nhập tên sản phẩm..."
                       required
                       className="!border !border-gray-300 focus:!border-blue-500"
-                      containerProps={{ className: "min-w-[100px]" }}
                     />
                   </div>
 
@@ -342,6 +516,7 @@ const UpdateProduct = ({ onUpdated }) => {
                         value={formData.price}
                         onChange={handleChange}
                         placeholder="0"
+                        min="0"
                         required
                         className="!border !border-gray-300 focus:!border-blue-500"
                       />
@@ -359,6 +534,7 @@ const UpdateProduct = ({ onUpdated }) => {
                         value={formData.quantity}
                         onChange={handleChange}
                         placeholder="0"
+                        min="0"
                         required
                         className="!border !border-gray-300 focus:!border-blue-500"
                       />
@@ -397,14 +573,14 @@ const UpdateProduct = ({ onUpdated }) => {
                     )}
                   </div>
 
-                  {/* Categories */}
+                  {/* Categories - ĐÃ CẬP NHẬT HIỂN THỊ PHÂN CẤP */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <Typography variant="h6" color="blue-gray" className="flex items-center gap-2">
-                        <TagIcon className="h-5 w-5" />
+                        <FolderIcon className="h-5 w-5" />
                         Danh mục
                       </Typography>
-                      <Button
+                      {/* <Button
                         size="sm"
                         variant="outlined"
                         color="blue"
@@ -413,7 +589,7 @@ const UpdateProduct = ({ onUpdated }) => {
                       >
                         <PlusIcon className="h-4 w-4" />
                         Thêm danh mục
-                      </Button>
+                      </Button> */}
                     </div>
 
                     {fetchingCategories ? (
@@ -423,32 +599,137 @@ const UpdateProduct = ({ onUpdated }) => {
                       </div>
                     ) : (
                       <>
-                        <Select
-                          label="Chọn danh mục"
+                        <select
+                          multiple
                           value={formData.categoryIds}
                           onChange={handleCategoryChange}
-                          multiple
-                          className="!border !border-gray-300 focus:!border-blue-500"
+                          className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all h-40"
                         >
-                          {categories.map((cat) => (
-                            <Option key={cat.id} value={cat.id}>
+                          {flattenedCategories.map((cat) => (
+                            <option 
+                              key={cat.id} 
+                              value={String(cat.id)}
+                              className={`${cat.level > 0 ? 'pl-' + (cat.level * 4) : ''} ${
+                                cat.level === 0 ? 'font-semibold bg-gray-100' : 
+                                cat.level === 1 ? 'pl-4 text-sm' : 
+                                'pl-8 text-sm text-gray-600'
+                              }`}
+                              style={{ 
+                                paddingLeft: `${cat.level * 20 + 12}px`,
+                                fontWeight: cat.level === 0 ? '600' : '400',
+                                backgroundColor: cat.level === 0 ? '#f9fafb' : 'transparent'
+                              }}
+                            >
+                              {cat.level > 0 && '└─ '}
                               {cat.name}
-                            </Option>
+                              {cat.level === 0 && ' (Danh mục cha)'}
+                            </option>
                           ))}
-                        </Select>
+                        </select>
+                        <Typography variant="small" color="gray" className="mt-1">
+                          Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều danh mục
+                        </Typography>
 
-                        {/* Selected Categories Chips */}
                         {selectedCategories.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {selectedCategories.map((cat) => (
-                              <Chip
-                                key={cat.id}
-                                value={cat.name}
-                                color="blue"
-                                variant="gradient"
-                                className="rounded-full"
-                              />
-                            ))}
+                          <div className="mt-3">
+                            <Typography variant="small" color="blue-gray" className="font-medium mb-2">
+                              Đã chọn ({selectedCategories.length}):
+                            </Typography>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedCategories.map((cat) => (
+                                <Chip
+                                  key={cat.id}
+                                  value={
+                                    <div className="flex items-center gap-1">
+                                      {cat.fullPath || cat.name}
+                                      <button
+                                        type="button"
+                                        onClick={() => removeCategory(String(cat.id))}
+                                        className="hover:text-red-500 transition-colors ml-1"
+                                      >
+                                        <XMarkIcon className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  }
+                                  color="blue"
+                                  className="rounded-full"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Tags */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <Typography variant="h6" color="blue-gray" className="flex items-center gap-2">
+                        <TagIcon className="h-5 w-5" />
+                        Tags
+                      </Typography>
+                      {/* <Button
+                        size="sm"
+                        variant="outlined"
+                        color="green"
+                        className="flex items-center gap-2"
+                        onClick={() => setTagDialog(true)}
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                        Thêm tag
+                      </Button> */}
+                    </div>
+
+                    {fetchingTags ? (
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <Spinner className="h-4 w-4" />
+                        <Typography variant="small">Đang tải tags...</Typography>
+                      </div>
+                    ) : (
+                      <>
+                        <select
+                          multiple
+                          value={formData.tagIds}
+                          onChange={handleTagChange}
+                          className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all h-32"
+                        >
+                          {tags.map((tag) => (
+                            <option key={tag.id} value={String(tag.id)}>
+                              {tag.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Typography variant="small" color="gray" className="mt-1">
+                          Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều tags
+                        </Typography>
+
+                        {selectedTags.length > 0 && (
+                          <div className="mt-3">
+                            <Typography variant="small" color="blue-gray" className="font-medium mb-2">
+                              Đã chọn ({selectedTags.length}):
+                            </Typography>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedTags.map((tag) => (
+                                <Chip
+                                  key={tag.id}
+                                  value={
+                                    <div className="flex items-center gap-1">
+                                      {tag.name}
+                                      <button
+                                        type="button"
+                                        onClick={() => removeTag(String(tag.id))}
+                                        className="hover:text-red-500 transition-colors ml-1"
+                                      >
+                                        <XMarkIcon className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  }
+                                  color="green"
+                                  className="rounded-full"
+                                />
+                              ))}
+                            </div>
                           </div>
                         )}
                       </>
@@ -524,6 +805,9 @@ const UpdateProduct = ({ onUpdated }) => {
                       src={imagePreview}
                       alt="Product preview"
                       className="w-full h-48 object-cover rounded-lg shadow-md"
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/300x200?text=Ảnh+lỗi";
+                      }}
                     />
                   ) : (
                     <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -557,9 +841,29 @@ const UpdateProduct = ({ onUpdated }) => {
                         {selectedCategories.map((cat) => (
                           <Chip
                             key={cat.id}
-                            value={cat.name}
+                            value={cat.fullPath || cat.name}
                             size="sm"
                             color="blue"
+                            variant="outlined"
+                            className="rounded-full"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTags.length > 0 && (
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="font-medium mb-2">
+                        Tags:
+                      </Typography>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedTags.map((tag) => (
+                          <Chip
+                            key={tag.id}
+                            value={tag.name}
+                            size="sm"
+                            color="green"
                             variant="outlined"
                             className="rounded-full"
                           />
@@ -651,6 +955,55 @@ const UpdateProduct = ({ onUpdated }) => {
               <PlusIcon className="h-4 w-4" />
             )}
             {creatingCategory ? "Đang tạo..." : "Tạo danh mục"}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* Add Tag Dialog */}
+      <Dialog open={tagDialog} handler={setTagDialog}>
+        <DialogHeader className="flex items-center gap-3">
+          <PlusIcon className="h-5 w-5 text-green-500" />
+          <Typography variant="h5" color="blue-gray">
+            Thêm tag mới
+          </Typography>
+        </DialogHeader>
+        <DialogBody>
+          <div className="space-y-4">
+            <Input
+              label="Tên tag"
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              placeholder="Nhập tên tag mới..."
+              className="!border !border-gray-300 focus:!border-green-500"
+            />
+            <Typography variant="small" color="gray">
+              Tag mới sẽ được thêm vào danh sách và tự động chọn cho sản phẩm này.
+            </Typography>
+          </div>
+        </DialogBody>
+        <DialogFooter className="gap-3">
+          <Button
+            variant="text"
+            color="blue-gray"
+            onClick={() => {
+              setTagDialog(false);
+              setNewTagName("");
+            }}
+          >
+            Hủy bỏ
+          </Button>
+          <Button
+            onClick={handleCreateTag}
+            disabled={creatingTag || !newTagName.trim()}
+            className="flex items-center gap-2"
+            color="green"
+          >
+            {creatingTag ? (
+              <Spinner className="h-4 w-4" />
+            ) : (
+              <PlusIcon className="h-4 w-4" />
+            )}
+            {creatingTag ? "Đang tạo..." : "Tạo tag"}
           </Button>
         </DialogFooter>
       </Dialog>

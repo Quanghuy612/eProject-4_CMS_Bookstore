@@ -63,7 +63,7 @@ export function Profile() {
       await ProductService.deleteProduct(id);
       setProducts((prev) => prev.filter((p) => p.id !== id));
       setDeleteDialog({ open: false, product: null });
-      alert("Xóa sản phẩm thành công!");
+      // alert("Xóa sản phẩm thành công!");
     } catch (err) {
       alert("Lỗi khi xóa sản phẩm: " + err);
     }

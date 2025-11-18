@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductService from "@/services/product/ProductService";
 import categoryService from "@/services/category/CategoryService";
+import tagService from "@/services/tags/TagService";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -25,6 +26,7 @@ import {
   CurrencyDollarIcon,
   HashtagIcon,
   ChevronRightIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 export function ProductCreate() {
@@ -38,12 +40,15 @@ export function ProductCreate() {
     active: true,
     mainImageUrl: "",
     categoryIds: [],
+    tagIds: [],
   });
 
   const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [flattenedCategories, setFlattenedCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newTagName, setNewTagName] = useState("");
   const [imagePreview, setImagePreview] = useState("");
 
   // 🔄 Hàm làm phẳng cấu trúc danh mục
@@ -103,6 +108,34 @@ export function ProductCreate() {
     fetchCategories();
   }, []);
 
+  // 📦 Load danh sách tags
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const res = await tagService.getAllTags();
+        
+        let tagsData = [];
+        if (Array.isArray(res)) {
+          tagsData = res;
+        } else if (Array.isArray(res?.data)) {
+          tagsData = res.data;
+        } else if (Array.isArray(res?.data?.data)) {
+          tagsData = res.data.data;
+        } else {
+          console.warn("⚠️ Dữ liệu tag không đúng định dạng:", res);
+          tagsData = [];
+        }
+        
+        setTags(tagsData);
+      } catch (err) {
+        console.error("❌ Error fetching tags:", err);
+        toast.error("Không thể tải tags!");
+      }
+    };
+
+    fetchTags();
+  }, []);
+
   // 🔹 Xử lý thay đổi input
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -123,6 +156,14 @@ export function ProductCreate() {
       Number(option.value)
     );
     setForm({ ...form, categoryIds: selectedIds });
+  };
+
+  // 🔹 Chọn nhiều tag
+  const handleTagChange = (e) => {
+    const selectedIds = Array.from(e.target.selectedOptions, (option) =>
+      Number(option.value)
+    );
+    setForm({ ...form, tagIds: selectedIds });
   };
 
   // 🟢 Tạo category mới
@@ -153,6 +194,32 @@ export function ProductCreate() {
     }
   };
 
+  // 🟢 Tạo tag mới
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) {
+      toast.warning("⚠️ Vui lòng nhập tên tag!");
+      return;
+    }
+
+    try {
+      const payload = { name: newTagName.trim() };
+      const res = await tagService.createTag(payload);
+
+      // ✅ Xử lý dữ liệu trả về
+      const newTag =
+        res?.data?.data || res?.data || res;
+
+      toast.success("✅ Tạo tag mới thành công!");
+
+      // Thêm tag mới vào danh sách
+      setTags(prev => [...prev, newTag]);
+      setNewTagName("");
+    } catch (err) {
+      console.error("❌ Lỗi khi tạo tag:", err);
+      toast.error("Tạo tag thất bại!");
+    }
+  };
+
   // 🧩 Submit form tạo sản phẩm
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -173,6 +240,7 @@ export function ProductCreate() {
         active: form.active,
         mainImageUrl: form.mainImageUrl,
         categoryIds: form.categoryIds,
+        tagIds: form.tagIds,
       };
 
       await ProductService.createProduct(payload);
@@ -193,11 +261,10 @@ export function ProductCreate() {
     form.categoryIds.includes(cat.id)
   );
 
-  // Hàm lấy tên category theo ID
-  const getCategoryName = (categoryId) => {
-    const category = flattenedCategories.find(cat => cat.id === categoryId);
-    return category ? category.name : `Category ${categoryId}`;
-  };
+  // Lấy danh sách tag đã chọn để hiển thị
+  const selectedTags = tags.filter(tag => 
+    form.tagIds.includes(tag.id)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -421,6 +488,114 @@ export function ProductCreate() {
                     )}
                   </div>
 
+                  {/* Tags */}
+                  <div>
+                    <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
+                      <TagIcon className="h-5 w-5" />
+                      Tags
+                    </Typography>
+
+                    <select
+                      multiple
+                      value={form.tagIds}
+                      onChange={handleTagChange}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all h-32"
+                    >
+                      {tags.length > 0 ? (
+                        tags.map((tag) => (
+                          <option 
+                            key={tag.id} 
+                            value={tag.id}
+                            className="py-1"
+                          >
+                            {tag.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>Đang tải tags...</option>
+                      )}
+                    </select>
+
+                    {/* Placeholder hiển thị nếu chưa chọn tag */}
+                    {form.tagIds.length === 0 && (
+                      <Typography variant="small" color="gray" className="mt-2 italic">
+                        -- Chọn tags cho sản phẩm (tùy chọn) --
+                      </Typography>
+                    )}
+
+                    <Typography variant="small" color="gray" className="mt-1">
+                      Giữ Ctrl hoặc Cmd để chọn nhiều tags
+                    </Typography>
+
+                    {/* Selected Tags Chips */}
+                    {selectedTags.length > 0 && (
+                      <div className="mt-3">
+                        <Typography variant="small" color="blue-gray" className="font-medium mb-2">
+                          Đã chọn ({selectedTags.length}):
+                        </Typography>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedTags.map((tag) => (
+                            <Chip
+                              key={tag.id}
+                              value={tag.name}
+                              color="green"
+                              variant="gradient"
+                              className="rounded-full text-xs"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Create New Category */}
+                  {/* <div className="p-4 bg-blue-50 rounded-lg">
+                    <Typography variant="h6" color="blue-gray" className="mb-2 flex items-center gap-2">
+                      <PlusIcon className="h-5 w-5 text-blue-500" />
+                      Tạo danh mục mới
+                    </Typography>
+                    <div className="flex gap-2">
+                      <Input
+                        label="Tên danh mục mới"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="Nhập tên danh mục mới..."
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={handleCreateCategory}
+                        color="blue"
+                        className="whitespace-nowrap"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div> */}
+
+                  {/* Create New Tag */}
+                  {/* <div className="p-4 bg-green-50 rounded-lg">
+                    <Typography variant="h6" color="blue-gray" className="mb-2 flex items-center gap-2">
+                      <PlusIcon className="h-5 w-5 text-green-500" />
+                      Tạo tag mới
+                    </Typography>
+                    <div className="flex gap-2">
+                      <Input
+                        label="Tên tag mới"
+                        value={newTagName}
+                        onChange={(e) => setNewTagName(e.target.value)}
+                        placeholder="Nhập tên tag mới..."
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={handleCreateTag}
+                        color="green"
+                        className="whitespace-nowrap"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div> */}
+
                   {/* Active Checkbox */}
                   <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
                     <Checkbox
@@ -529,6 +704,26 @@ export function ProductCreate() {
                             value={cat.fullPath || cat.name}
                             size="sm"
                             color="blue"
+                            variant="outlined"
+                            className="rounded-full text-xs"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTags.length > 0 && (
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="font-medium mb-2">
+                        Tags:
+                      </Typography>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedTags.map((tag) => (
+                          <Chip
+                            key={tag.id}
+                            value={tag.name}
+                            size="sm"
+                            color="green"
                             variant="outlined"
                             className="rounded-full text-xs"
                           />
