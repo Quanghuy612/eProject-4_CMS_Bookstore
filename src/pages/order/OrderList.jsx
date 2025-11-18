@@ -122,7 +122,7 @@ export function OrderList() {
                       <td className={className}>
                         <div className="flex flex-col">
                           <Typography variant="small" color="blue-gray" className="font-semibold">
-                            {order.user?.fullName || "N/A"}
+                            {order.user?.fullName || order.user?.username || order.user?.email || "N/A"}
                           </Typography>
                           <Typography variant="small" className="text-xs font-normal text-blue-gray-500">
                             {order.user?.email || ""}
@@ -145,9 +145,6 @@ export function OrderList() {
           </table>
         </CardBody>
       </Card>
-
-      {/* Outlet để render OrderCreate hoặc OrderDetail */}
-      <Outlet />
     </div>
   );
 }

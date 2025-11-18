@@ -96,12 +96,16 @@ export function OrderCreate() {
         paymentStatus,
       };
 
-      await OrderService.createOrder(payload);
-      alert("Order created successfully!");
-      navigate("/dashboard/orders");
+      const result = await OrderService.createOrder(payload);
+      
+      if (result) {
+        alert("Order created successfully!");
+        navigate("/dashboard/orders");
+      } else {
+        alert("Order creation failed - no response from server");
+      }
     } catch (err) {
       alert(`Error creating order: ${err.message}`);
-      console.error("Error creating order:", err);
     } finally {
       setLoading(false);
     }

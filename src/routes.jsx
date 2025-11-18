@@ -7,11 +7,7 @@ import {
   RectangleStackIcon,
   TagIcon,
   CubeIcon,
-<<<<<<< HEAD
-  ShoppingCartIcon,
-=======
    ShoppingCartIcon,
->>>>>>> cc3489287ca374885b484519ef71fd3406b45eb7
 } from "@heroicons/react/24/solid"; 
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import ProductCreate from "./pages/product/ProductCreate";
@@ -19,13 +15,9 @@ import ProductDetail from "./pages/product/ProductDetail";
 import UpdateProduct from "./pages/product/UpdateProduct";
 import CategoryManager from "./pages/category/CategoryManager";
 import TagManager from "./pages/tag/TagManager";
-<<<<<<< HEAD
-import { OrderList, OrderDetail, OrderCreate, OrdersWrapper } from "./pages/order";
-=======
 import OrderCreate from "./pages/order/OrderCreate";
 import OrderDetail from "./pages/order/OrderDetail";
 import OrderList from "./pages/order/OrderList";
->>>>>>> cc3489287ca374885b484519ef71fd3406b45eb7
 import { SignIn } from "@/pages/auth";
 
 const icon = {
@@ -81,15 +73,6 @@ export const routes = [
         icon: <ShoppingCartIcon {...icon} />,
         name: "Order Management",
         path: "/orders",
-<<<<<<< HEAD
-        element: <OrdersWrapper />,
-        children: [
-          {
-            name: "Order List",
-            path: "",
-            element: <OrderList />,
-          },
-=======
         element: <OrderList />,
         children: [
           // {
@@ -97,7 +80,6 @@ export const routes = [
           //   path: "",
           //   element: <OrderList />,
           // },
->>>>>>> cc3489287ca374885b484519ef71fd3406b45eb7
           {
             name: "Create Order",
             path: "create",
