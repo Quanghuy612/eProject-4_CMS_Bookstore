@@ -7,7 +7,10 @@ import {
   RectangleStackIcon,
   TagIcon,
   CubeIcon,
-   ShoppingCartIcon,
+  ShoppingCartIcon,
+  UsersIcon,
+  ClipboardDocumentListIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid"; 
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import ProductCreate from "./pages/product/ProductCreate";
@@ -18,7 +21,9 @@ import TagManager from "./pages/tag/TagManager";
 import OrderCreate from "./pages/order/OrderCreate";
 import OrderDetail from "./pages/order/OrderDetail";
 import OrderList from "./pages/order/OrderList";
+import CustomerManager from "./pages/customer/CustomerManager";
 import { SignIn } from "@/pages/auth";
+import NotFound from "./pages/404/NotFound";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -75,11 +80,6 @@ export const routes = [
         path: "/orders",
         element: <OrderList />,
         children: [
-          // {
-          //   name: "Order List",
-          //   path: "",
-          //   element: <OrderList />,
-          // },
           {
             name: "Create Order",
             path: "create",
@@ -91,6 +91,12 @@ export const routes = [
             element: <OrderDetail />,
           },
         ],
+      },
+      {
+        icon: <UsersIcon {...icon} />,
+        name: "Customer Management",
+        path: "/customer",
+        element: <CustomerManager />,
       },
       {
         icon: <TableCellsIcon {...icon} />,
@@ -111,10 +117,16 @@ export const routes = [
     layout: "auth",
     pages: [
       {
-        icon: <ServerStackIcon {...icon} />,
+        icon: <UserCircleIcon {...icon} />,
         name: "Sign In",
         path: "/sign-in",
         element: <SignIn />,
+      },
+      {
+        icon: <ExclamationTriangleIcon {...icon} />,
+        name: "Not Found",
+        path: "/404",
+        element: <NotFound />,
       },
     ],
   },
