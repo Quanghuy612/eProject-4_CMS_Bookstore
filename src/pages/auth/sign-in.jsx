@@ -27,7 +27,7 @@ const handleSubmit = async (e) => {
 
     const decodedToken = loginService.decodeToken(userData.token);
 
-    if (decodedToken?.role === "ADMIN", "ROOT") {
+    if (decodedToken?.role === "ROLE_ADMIN", "ROLE_ROOT") {
       navigator("/dashboard/home");
        toast.success("Login successful!");
     } else if (decodedToken?.role === "BASIC_USER") {
