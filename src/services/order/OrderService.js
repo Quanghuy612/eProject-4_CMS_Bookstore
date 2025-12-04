@@ -1,44 +1,60 @@
 import baseApi from "@/api/baseApi";
 
-const OrderService = {
-  // Tạo đơn hàng mới
-  async createOrder(payload) {
+const api = baseApi;
+
+const orderService = {
+  getAllOrders: async () => {
     try {
-      const response = await baseApi.post("/orders/make-order", payload);
-      return response.data?.data || response.data;
+      const response = await api.get('/cms/orders');
+      return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message);
+      console.error('Error fetching all orders:', error);
+      throw error;
     }
   },
 
-  // Lấy danh sách đơn hàng của user đang đăng nhập
-  async getMyOrders() {
+  getOrderDetail: async (id) => {
     try {
-      const response = await baseApi.get("/orders");
-      console.log("Full orders API response:", response);
-      console.log("response.data:", response.data);
-      console.log("response.data.data:", response.data?.data);
-      // Backend trả về ResponseDTO với data bên trong
-      const data = response.data?.data || response.data;
-      console.log("Final data:", data);
-      console.log("Is array?", Array.isArray(data));
-      // Đảm bảo trả về array
-      return Array.isArray(data) ? data : [];
+      const response = await api.get(`/cms/orders/${id}`);
+      return response.data;
     } catch (error) {
-      console.error("OrderService.getMyOrders error:", error);
-      throw new Error(error.response?.data?.message || error.message);
+      console.error(`Error fetching order detail for id ${id}:`, error);
+      throw error;
     }
   },
 
-  // Lấy chi tiết đơn hàng theo ID
-  async getOrderById(orderId) {
+  searchOrders: async (filters = {}) => {
     try {
-      const response = await baseApi.get(`/orders/${orderId}`);
-      return response.data?.data || response.data;
+      const response = await api.get('/cms/orders', {
+        params: filters
+      });
+      return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message);
+      console.error('Error searching orders:', error);
+      throw error;
     }
   },
+
+  // SỬA: Đúng endpoint và cách gọi
+  updateOrderStatus: async (id, status) => {
+    try {
+      const response = await api.put(`/cms/orders/${id}/status?status=${status}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating order ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deleteOrder: async (id) => {
+    try {
+      const response = await api.delete(`/cms/orders/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting order ${id}:`, error);
+      throw error;
+    }
+  }
 };
 
-export default OrderService;
+export default orderService;

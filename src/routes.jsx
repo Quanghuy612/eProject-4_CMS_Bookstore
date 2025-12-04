@@ -18,7 +18,6 @@ import ProductDetail from "./pages/product/ProductDetail";
 import UpdateProduct from "./pages/product/UpdateProduct";
 import CategoryManager from "./pages/category/CategoryManager";
 import TagManager from "./pages/tag/TagManager";
-import OrderCreate from "./pages/order/OrderCreate";
 import OrderDetail from "./pages/order/OrderDetail";
 import OrderList from "./pages/order/OrderList";
 import CustomerManager from "./pages/customer/CustomerManager";
@@ -81,11 +80,6 @@ export const routes = [
         element: <OrderList />,
         children: [
           {
-            name: "Create Order",
-            path: "create",
-            element: <OrderCreate />,
-          },
-          {
             name: "Order Detail",
             path: ":id",
             element: <OrderDetail />,
@@ -100,7 +94,7 @@ export const routes = [
       },
       {
         icon: <TableCellsIcon {...icon} />,
-        name: "Tables",
+        name: "Time Clock",
         path: "/tables",
         element: <Tables />,
       },
