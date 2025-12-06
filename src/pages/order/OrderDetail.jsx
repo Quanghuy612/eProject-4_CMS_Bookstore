@@ -104,10 +104,10 @@ export function OrderDetail() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Typography variant="small" color="blue-gray" className="font-semibold">
-                  Customer:
+                  Full Name:
                 </Typography>
                 <Typography variant="small" className="text-blue-gray-600">
-                  {order.user?.fullName || order.user?.username || order.user?.email || "N/A"}
+                  {order.user?.fullName || "N/A"}
                 </Typography>
               </div>
               <div>

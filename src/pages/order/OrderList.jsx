@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, CardHeader, CardBody, Typography, Button, Chip } from "@material-tailwind/react";
 import OrderService from "@/services/order/OrderService";
 
@@ -7,7 +7,6 @@ export function OrderList() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const location = useLocation();
 
   useEffect(() => {
     fetchOrders();
@@ -17,10 +16,12 @@ export function OrderList() {
     try {
       setLoading(true);
       const data = await OrderService.getMyOrders();
+      // Đảm bảo data là array
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message);
-      setOrders([]);
+      console.error("Error fetching orders:", err);
+      setOrders([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -36,11 +37,6 @@ export function OrderList() {
     };
     return statusColors[status] || "gray";
   };
-
-  // ✅ Nếu route là /create hoặc /:id → render Outlet (child routes)
-  if (location.pathname.includes("/create") || location.pathname.match(/\/\d+$/)) {
-    return <Outlet />;
-  }
 
   if (loading) {
     return (
@@ -63,24 +59,31 @@ export function OrderList() {
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
-        <CardHeader variant="gradient" color="blue" className="mb-8 p-6 flex items-center justify-between">
-          <Typography variant="h6" color="white">
-            Order Management
-          </Typography>
-          {/* Relative link → Outlet sẽ render */}
-          <Link to="create">
-            <Button color="white" size="sm">
-              Create Order
-            </Button>
-          </Link>
+        <CardHeader variant="gradient" color="blue" className="mb-8 p-6">
+          <div className="flex items-center justify-between">
+            <Typography variant="h6" color="white">
+              Order Management
+            </Typography>
+            <Link to="/dashboard/orders/create">
+              <Button color="white" size="sm">
+                Create Order
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
           <table className="w-full min-w-[640px] table-auto">
             <thead>
               <tr>
                 {["Order ID", "Total Price", "Status", "Customer", "Actions"].map((el) => (
-                  <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
-                    <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
+                  <th
+                    key={el}
+                    className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                  >
+                    <Typography
+                      variant="small"
+                      className="text-[11px] font-bold uppercase text-blue-gray-400"
+                    >
                       {el}
                     </Typography>
                   </th>
@@ -122,7 +125,7 @@ export function OrderList() {
                       <td className={className}>
                         <div className="flex flex-col">
                           <Typography variant="small" color="blue-gray" className="font-semibold">
-                            {order.user?.fullName || order.user?.username || order.user?.email || "N/A"}
+                            {order.user?.fullName || "N/A"}
                           </Typography>
                           <Typography variant="small" className="text-xs font-normal text-blue-gray-500">
                             {order.user?.email || ""}
@@ -130,8 +133,7 @@ export function OrderList() {
                         </div>
                       </td>
                       <td className={className}>
-                        {/* Relative link → Outlet sẽ render */}
-                        <Link to={`${order.id}`}>
+                        <Link to={`/dashboard/orders/${order.id}`}>
                           <Button color="blue" size="sm" variant="text">
                             View Details
                           </Button>
