@@ -245,9 +245,9 @@ export function ProductCreate() {
 
       await ProductService.createProduct(payload);
 
-      // toast.success("✅ Thêm sản phẩm thành công!");
-      // navigate("/dashboard/products", { replace: true });
-      // setTimeout(() => window.location.reload(), 300);
+      toast.success("✅ Thêm sản phẩm thành công!");
+      navigate("/dashboard/products", { replace: true });
+      setTimeout(() => window.location.reload(), 300);
     } catch (err) {
       console.error(err);
       toast.error("❌ Thêm sản phẩm thất bại! Vui lòng thử lại.");
