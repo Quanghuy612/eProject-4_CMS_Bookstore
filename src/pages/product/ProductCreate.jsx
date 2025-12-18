@@ -245,9 +245,9 @@ export function ProductCreate() {
 
       await ProductService.createProduct(payload);
 
-      toast.success("✅ Thêm sản phẩm thành công!");
-      navigate("/dashboard/products", { replace: true });
-      setTimeout(() => window.location.reload(), 300);
+      // toast.success("✅ Thêm sản phẩm thành công!");
+      // navigate("/dashboard/products", { replace: true });
+      // setTimeout(() => window.location.reload(), 300);
     } catch (err) {
       console.error(err);
       toast.error("❌ Thêm sản phẩm thất bại! Vui lòng thử lại.");
@@ -324,7 +324,7 @@ export function ProductCreate() {
                       name="name"
                       value={form.name}
                       onChange={handleChange}
-                      placeholder="Nhập tên sản phẩm..."
+                      // placeholder="Nhập tên sản phẩm..."
                       required
                       className="!border !border-gray-300 focus:!border-blue-500"
                     />
@@ -341,7 +341,7 @@ export function ProductCreate() {
                       name="description"
                       value={form.description}
                       onChange={handleChange}
-                      placeholder="Mô tả chi tiết về sản phẩm..."
+                      // placeholder="Mô tả chi tiết về sản phẩm..."
                       required
                       className="!border !border-gray-300 focus:!border-blue-500 min-h-[120px]"
                     />
@@ -396,7 +396,7 @@ export function ProductCreate() {
                       name="mainImageUrl"
                       value={form.mainImageUrl}
                       onChange={handleChange}
-                      placeholder="https://example.com/image.jpg"
+                      // placeholder="https://example.com/image.jpg"
                       required
                       className="!border !border-gray-300 focus:!border-blue-500"
                     />

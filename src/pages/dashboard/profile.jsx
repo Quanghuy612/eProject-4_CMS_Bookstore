@@ -28,7 +28,11 @@ import {
   ExclamationTriangleIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon
 } from "@heroicons/react/24/outline";
 import ProductService from "@/services/product/ProductService";
 
@@ -43,8 +47,21 @@ export function Profile() {
   const [totalElements, setTotalElements] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [isMobile, setIsMobile] = useState(false);
 
   const location = useLocation();
+
+  // Kiểm tra kích thước màn hình
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // ✅ Fetch products (paginated)
   const fetchProducts = async () => {
@@ -134,7 +151,7 @@ export function Profile() {
   if (error)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Card className="w-96 shadow-xl border border-red-200">
+        <Card className="w-11/12 sm:w-96 shadow-xl border border-red-200">
           <CardBody className="text-center">
             <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <Typography variant="h5" color="red" className="mb-2">
@@ -153,35 +170,35 @@ export function Profile() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 lg:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 lg:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <Card className="shadow-xl border-0 mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 overflow-hidden">
-          <CardBody className="p-6 lg:p-8 relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12"></div>
+        <Card className="shadow-xl border-0 mb-4 sm:mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 overflow-hidden">
+          <CardBody className="p-4 sm:p-6 lg:p-8 relative">
+            <div className="absolute top-0 right-0 w-20 h-20 sm:w-32 sm:h-32 bg-white/10 rounded-full -translate-y-10 translate-x-10 sm:-translate-y-16 sm:translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-16 h-16 sm:w-24 sm:h-24 bg-white/10 rounded-full translate-y-8 -translate-x-8 sm:translate-y-12 sm:-translate-x-12"></div>
             
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <ShoppingBagIcon className="h-8 w-8 text-white" />
+            <div className="flex flex-col lg:flex-row justify-between items-start gap-4 sm:gap-6 relative z-10">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-white/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+                  <ShoppingBagIcon className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
                 <div>
-                  <Typography variant="h3" className="text-white font-bold mb-2">
+                  <Typography variant="h4" className="text-white font-bold mb-1 sm:mb-2 text-lg sm:text-2xl lg:text-3xl">
                     Quản lý Sản phẩm
                   </Typography>
-                  <Typography variant="paragraph" className="text-blue-100">
+                  <Typography variant="paragraph" className="text-blue-100 text-xs sm:text-sm">
                     Quản lý {totalElements} sản phẩm trong cửa hàng của bạn
                   </Typography>
                 </div>
               </div>
-              <Link to="create">
+              <Link to="create" className="w-full sm:w-auto">
                 <Button 
-                  className="bg-white text-blue-600 hover:bg-blue-50 hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-md"
-                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-blue-50 hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold shadow-md w-full sm:w-auto"
+                  size={isMobile ? "md" : "lg"}
                 >
-                  <PlusIcon className="h-5 w-5" />
-                  Thêm sản phẩm
+                  <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span>Thêm sản phẩm</span>
                 </Button>
               </Link>
             </div>
@@ -189,74 +206,74 @@ export function Profile() {
         </Card>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
           <Card className="shadow-lg border-0 bg-white hover:shadow-xl transition-shadow duration-300">
-            <CardBody className="p-4 lg:p-6">
+            <CardBody className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Typography variant="small" color="blue-gray" className="font-medium mb-1">
+                  <Typography variant="small" color="blue-gray" className="font-medium mb-1 text-xs sm:text-sm">
                     Tổng sản phẩm
                   </Typography>
-                  <Typography variant="h4" className="text-blue-600 font-bold">
+                  <Typography variant="h4" className="text-blue-600 font-bold text-lg sm:text-xl lg:text-2xl">
                     {totalElements}
                   </Typography>
                 </div>
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <ShoppingBagIcon className="h-5 w-5 text-blue-600" />
+                <div className="p-2 sm:p-3 bg-blue-100 rounded-lg sm:rounded-xl">
+                  <ShoppingBagIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                 </div>
               </div>
             </CardBody>
           </Card>
 
           <Card className="shadow-lg border-0 bg-white hover:shadow-xl transition-shadow duration-300">
-            <CardBody className="p-4 lg:p-6">
+            <CardBody className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Typography variant="small" color="blue-gray" className="font-medium mb-1">
+                  <Typography variant="small" color="blue-gray" className="font-medium mb-1 text-xs sm:text-sm">
                     Đang hoạt động
                   </Typography>
-                  <Typography variant="h4" className="text-green-600 font-bold">
+                  <Typography variant="h4" className="text-green-600 font-bold text-lg sm:text-xl lg:text-2xl">
                     {products.filter(p => p.active).length}
                   </Typography>
                 </div>
-                <div className="p-3 bg-green-100 rounded-xl">
-                  <EyeIcon className="h-5 w-5 text-green-600" />
+                <div className="p-2 sm:p-3 bg-green-100 rounded-lg sm:rounded-xl">
+                  <EyeIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 </div>
               </div>
             </CardBody>
           </Card>
 
           <Card className="shadow-lg border-0 bg-white hover:shadow-xl transition-shadow duration-300">
-            <CardBody className="p-4 lg:p-6">
+            <CardBody className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Typography variant="small" color="blue-gray" className="font-medium mb-1">
+                  <Typography variant="small" color="blue-gray" className="font-medium mb-1 text-xs sm:text-sm">
                     Ngừng bán
                   </Typography>
-                  <Typography variant="h4" className="text-red-600 font-bold">
+                  <Typography variant="h4" className="text-red-600 font-bold text-lg sm:text-xl lg:text-2xl">
                     {products.filter(p => !p.active).length}
                   </Typography>
                 </div>
-                <div className="p-3 bg-red-100 rounded-xl">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+                <div className="p-2 sm:p-3 bg-red-100 rounded-lg sm:rounded-xl">
+                  <ExclamationTriangleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                 </div>
               </div>
             </CardBody>
           </Card>
 
           <Card className="shadow-lg border-0 bg-white hover:shadow-xl transition-shadow duration-300">
-            <CardBody className="p-4 lg:p-6">
+            <CardBody className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Typography variant="small" color="blue-gray" className="font-medium mb-1">
+                  <Typography variant="small" color="blue-gray" className="font-medium mb-1 text-xs sm:text-sm">
                     Tổng giá trị
                   </Typography>
-                  <Typography variant="h5" className="text-purple-600 font-bold">
+                  <Typography variant="h5" className="text-purple-600 font-bold text-base sm:text-lg lg:text-xl">
                     {formatCurrency(products.reduce((sum, p) => sum + (p.price || 0), 0))}
                   </Typography>
                 </div>
-                <div className="p-3 bg-purple-100 rounded-xl">
-                  <Typography variant="h6" className="text-purple-600 font-bold">₫</Typography>
+                <div className="p-2 sm:p-3 bg-purple-100 rounded-lg sm:rounded-xl">
+                  <Typography variant="h6" className="text-purple-600 font-bold text-sm sm:text-base">₫</Typography>
                 </div>
               </div>
             </CardBody>
@@ -264,25 +281,27 @@ export function Profile() {
         </div>
 
         {/* Search and Filter Section */}
-        <Card className="shadow-lg border-0 mb-6">
-          <CardBody className="p-4 lg:p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center">
-              <div className="flex-1 w-full">
+        <Card className="shadow-lg border-0 mb-4 sm:mb-6">
+          <CardBody className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+              <div className="flex-1">
                 <Input
-                  icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                  icon={<MagnifyingGlassIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
                   label="Tìm kiếm sản phẩm..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="!border-t-blue-gray-200"
+                  className="!border-t-blue-gray-200 text-sm sm:text-base"
+                  size={isMobile ? "md" : "lg"}
                 />
               </div>
-              <div className="flex gap-3 w-full lg:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 <Select 
                   value={statusFilter} 
                   onChange={(value) => setStatusFilter(value)}
                   label="Trạng thái"
-                  className="min-w-[150px]"
+                  className="min-w-full sm:min-w-[150px]"
                   icon={<FunnelIcon className="h-4 w-4" />}
+                  size={isMobile ? "md" : "lg"}
                 >
                   <Option value="ALL">Tất cả</Option>
                   <Option value="ACTIVE">Đang bán</Option>
@@ -293,210 +312,308 @@ export function Profile() {
                   value={size} 
                   onChange={(value) => setSize(Number(value))} 
                   label="Hiển thị"
-                  className="min-w-[120px]"
+                  className="min-w-full sm:min-w-[120px]"
+                  size={isMobile ? "md" : "lg"}
                 >
                   <Option value={5}>5 / trang</Option>
                   <Option value={10}>10 / trang</Option>
-                  {/* <Option value={20}>20 / trang</Option>
-                  <Option value={50}>50 / trang</Option> */}
+                  <Option value={20}>20 / trang</Option>
+                  <Option value={50}>50 / trang</Option>
                 </Select>
 
-                <Tooltip content="Làm mới">
-                  <IconButton variant="outlined" onClick={fetchProducts} className="h-10 w-10">
-                    <ArrowPathIcon className="h-4 w-4" />
-                  </IconButton>
-                </Tooltip>
+                <div className="flex justify-center sm:justify-start">
+                  <Tooltip content="Làm mới">
+                    <IconButton 
+                      variant="outlined" 
+                      onClick={fetchProducts} 
+                      className="h-10 w-10 sm:h-12 sm:w-12"
+                      size={isMobile ? "md" : "lg"}
+                    >
+                      <ArrowPathIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </IconButton>
+                  </Tooltip>
+                </div>
               </div>
             </div>
           </CardBody>
         </Card>
 
-        {/* Product Table */}
+        {/* Product Table/Grid */}
         <Card className="shadow-xl border-0 overflow-hidden">
           <CardBody className="p-0">
-            <div className="p-4 lg:p-6 bg-white border-b border-blue-gray-50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div className="p-3 sm:p-4 lg:p-6 bg-white border-b border-blue-gray-50 flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
               <div>
-                <Typography variant="h5" color="blue-gray" className="font-semibold">
+                <Typography variant="h5" color="blue-gray" className="font-semibold text-lg sm:text-xl">
                   Danh sách sản phẩm
                 </Typography>
-                <Typography variant="small" color="gray">
+                <Typography variant="small" color="gray" className="text-xs sm:text-sm">
                   Hiển thị {filteredProducts.length} sản phẩm
                 </Typography>
               </div>
-              
-              {/* <Badge content={filteredProducts.length} withBorder>
-                <Typography variant="small" color="blue-gray" className="font-medium">
-                  Kết quả tìm kiếm
-                </Typography>
-              </Badge> */}
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-max table-auto">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-50 to-indigo-50">
-                    <th className="p-4 text-left">
-                      <Typography variant="small" color="blue-gray" className="font-semibold">
-                        SẢN PHẨM
-                      </Typography>
-                    </th>
-                    <th className="p-4 text-left">
-                      <Typography variant="small" color="blue-gray" className="font-semibold">
-                        MÔ TẢ
-                      </Typography>
-                    </th>
-                    <th className="p-4 text-left">
-                      <Typography variant="small" color="blue-gray" className="font-semibold">
-                        GIÁ
-                      </Typography>
-                    </th>
-                    <th className="p-4 text-left">
-                      <Typography variant="small" color="blue-gray" className="font-semibold">
-                        TRẠNG THÁI
-                      </Typography>
-                    </th>
-                    <th className="p-4 text-center">
-                      <Typography variant="small" color="blue-gray" className="font-semibold">
-                        THAO TÁC
-                      </Typography>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 lg:p-12 text-center">
-                        <ShoppingBagIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                        <Typography variant="h6" color="gray" className="mb-2">
-                          {searchTerm || statusFilter !== "ALL" ? "Không tìm thấy sản phẩm phù hợp" : "Chưa có sản phẩm nào"}
-                        </Typography>
-                        <Typography color="gray" className="mb-4 max-w-md mx-auto">
-                          {searchTerm || statusFilter !== "ALL" 
-                            ? "Hãy thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc của bạn" 
-                            : "Hãy thêm sản phẩm đầu tiên của bạn để bắt đầu kinh doanh"
-                          }
-                        </Typography>
-                        <Link to="create">
-                          <Button color="blue" className="flex items-center gap-2 mx-auto">
-                            <PlusIcon className="h-4 w-4" />
-                            Thêm sản phẩm
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredProducts.map((product, index) => (
-                      <tr 
-                        key={product.id}
-                        className={`border-b border-blue-gray-50 transition-all duration-200 hover:bg-blue-50 ${
-                          index % 2 === 0 ? "bg-white" : "bg-blue-gray-50/30"
-                        }`}
-                      >
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar
-                              src={product.mainImageUrl || "/img/placeholder.png"}
-                              alt={product.name}
-                              size="lg"
-                              className="rounded-lg border-2 border-white shadow-md"
-                              variant="rounded"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <Typography variant="h6" color="blue-gray" className="font-semibold truncate">
+            {/* Mobile View - Card Layout */}
+            {isMobile && (
+              <div className="p-3 sm:p-4 space-y-3">
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingBagIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                    <Typography variant="h6" color="gray" className="mb-2 text-sm">
+                      {searchTerm || statusFilter !== "ALL" ? "Không tìm thấy sản phẩm phù hợp" : "Chưa có sản phẩm nào"}
+                    </Typography>
+                    <Typography color="gray" className="mb-4 text-xs">
+                      {searchTerm || statusFilter !== "ALL" 
+                        ? "Hãy thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc của bạn" 
+                        : "Hãy thêm sản phẩm đầu tiên của bạn để bắt đầu kinh doanh"
+                      }
+                    </Typography>
+                    <Link to="create">
+                      <Button color="blue" size="sm" className="flex items-center gap-2 mx-auto">
+                        <PlusIcon className="h-3 w-3" />
+                        Thêm sản phẩm
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  filteredProducts.map((product) => (
+                    <Card key={product.id} className="border border-blue-gray-100 shadow-sm">
+                      <CardBody className="p-3">
+                        <div className="flex gap-3">
+                          <Avatar
+                            src={product.mainImageUrl || "/img/placeholder.png"}
+                            alt={product.name}
+                            size="lg"
+                            className="rounded-lg border border-white shadow-sm flex-shrink-0"
+                            variant="rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                              <Typography variant="h6" color="blue-gray" className="font-semibold text-sm truncate">
                                 {product.name}
                               </Typography>
-                              <Typography variant="small" color="gray" className="flex items-center gap-1">
-                                <span>ID:</span>
-                                <span className="font-mono">{product.id}</span>
+                              <Chip
+                                value={product.active ? "Đang bán" : "Ngừng bán"}
+                                size="sm"
+                                color={product.active ? "green" : "red"}
+                                className="rounded-full text-xs"
+                              />
+                            </div>
+                            <Typography variant="small" color="gray" className="mb-2 text-xs line-clamp-2">
+                              {truncateText(product.description || 'Chưa có mô tả', 60)}
+                            </Typography>
+                            <div className="flex justify-between items-center">
+                              <Typography variant="h6" color="green" className="font-bold text-sm">
+                                {formatCurrency(product.price)}
                               </Typography>
+                              <div className="flex gap-1">
+                                <Tooltip content="Xem chi tiết">
+                                  <Link to={`${product.id}`}>
+                                    <IconButton variant="text" color="blue" size="sm">
+                                      <EyeIcon className="h-3.5 w-3.5" />
+                                    </IconButton>
+                                  </Link>
+                                </Tooltip>
+                                <Tooltip content="Chỉnh sửa">
+                                  <Link to={`update/${product.id}`}>
+                                    <IconButton variant="text" color="green" size="sm">
+                                      <PencilIcon className="h-3.5 w-3.5" />
+                                    </IconButton>
+                                  </Link>
+                                </Tooltip>
+                                <Tooltip content="Xóa">
+                                  <IconButton
+                                    variant="text"
+                                    color="red"
+                                    size="sm"
+                                    onClick={() => setDeleteDialog({ open: true, product })}
+                                  >
+                                    <TrashIcon className="h-3.5 w-3.5" />
+                                  </IconButton>
+                                </Tooltip>
+                              </div>
                             </div>
                           </div>
-                        </td>
-                        <td className="p-4">
-                          <Typography variant="paragraph" color="blue-gray" className="max-w-xs leading-relaxed">
-                            {truncateText(product.description || 'Chưa có mô tả', 80)}
+                        </div>
+                      </CardBody>
+                    </Card>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Desktop View - Table Layout */}
+            {!isMobile && (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-max table-auto">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                      <th className="p-3 sm:p-4 text-left">
+                        <Typography variant="small" color="blue-gray" className="font-semibold">
+                          SẢN PHẨM
+                        </Typography>
+                      </th>
+                      <th className="p-3 sm:p-4 text-left hidden lg:table-cell">
+                        <Typography variant="small" color="blue-gray" className="font-semibold">
+                          MÔ TẢ
+                        </Typography>
+                      </th>
+                      <th className="p-3 sm:p-4 text-left">
+                        <Typography variant="small" color="blue-gray" className="font-semibold">
+                          GIÁ
+                        </Typography>
+                      </th>
+                      <th className="p-3 sm:p-4 text-left">
+                        <Typography variant="small" color="blue-gray" className="font-semibold">
+                          TRẠNG THÁI
+                        </Typography>
+                      </th>
+                      <th className="p-3 sm:p-4 text-center">
+                        <Typography variant="small" color="blue-gray" className="font-semibold">
+                          THAO TÁC
+                        </Typography>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-6 lg:p-8 text-center">
+                          <ShoppingBagIcon className="h-12 w-12 lg:h-16 lg:w-16 text-gray-300 mx-auto mb-3" />
+                          <Typography variant="h6" color="gray" className="mb-2">
+                            {searchTerm || statusFilter !== "ALL" ? "Không tìm thấy sản phẩm phù hợp" : "Chưa có sản phẩm nào"}
                           </Typography>
-                        </td>
-                        <td className="p-4">
-                          <Typography variant="h6" color="green" className="font-bold">
-                            {formatCurrency(product.price)}
+                          <Typography color="gray" className="mb-4 max-w-md mx-auto">
+                            {searchTerm || statusFilter !== "ALL" 
+                              ? "Hãy thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc của bạn" 
+                              : "Hãy thêm sản phẩm đầu tiên của bạn để bắt đầu kinh doanh"
+                            }
                           </Typography>
-                          {product.originalPrice && product.originalPrice > product.price && (
-                            <Typography variant="small" color="red" className="line-through">
-                              {formatCurrency(product.originalPrice)}
-                            </Typography>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <Chip
-                            value={product.active ? "Đang bán" : "Ngừng bán"}
-                            size="sm"
-                            color={product.active ? "green" : "red"}
-                            variant="gradient"
-                            className="rounded-full font-medium"
-                          />
-                        </td>
-                        <td className="p-4">
-                          <div className="flex justify-center gap-1">
-                            <Tooltip content="Xem chi tiết">
-                              <Link to={`${product.id}`}>
-                                <IconButton variant="text" color="blue" className="hover:bg-blue-50">
-                                  <EyeIcon className="h-4 w-4" />
-                                </IconButton>
-                              </Link>
-                            </Tooltip>
-                            <Tooltip content="Chỉnh sửa">
-                              <Link to={`update/${product.id}`}>
-                                <IconButton variant="text" color="green" className="hover:bg-green-50">
-                                  <PencilIcon className="h-4 w-4" />
-                                </IconButton>
-                              </Link>
-                            </Tooltip>
-                            <Tooltip content="Xóa">
-                              <IconButton
-                                variant="text"
-                                color="red"
-                                onClick={() => setDeleteDialog({ open: true, product })}
-                                className="hover:bg-red-50"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
-                          </div>
+                          <Link to="create">
+                            <Button color="blue" className="flex items-center gap-2 mx-auto">
+                              <PlusIcon className="h-4 w-4" />
+                              Thêm sản phẩm
+                            </Button>
+                          </Link>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      filteredProducts.map((product, index) => (
+                        <tr 
+                          key={product.id}
+                          className={`border-b border-blue-gray-50 transition-all duration-200 hover:bg-blue-50 ${
+                            index % 2 === 0 ? "bg-white" : "bg-blue-gray-50/30"
+                          }`}
+                        >
+                          <td className="p-3 sm:p-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar
+                                src={product.mainImageUrl || "/img/placeholder.png"}
+                                alt={product.name}
+                                size="md"
+                                className="rounded-lg border border-white shadow-sm"
+                                variant="rounded"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <Typography variant="h6" color="blue-gray" className="font-semibold truncate text-sm">
+                                  {product.name}
+                                </Typography>
+                                <Typography variant="small" color="gray" className="flex items-center gap-1 text-xs">
+                                  <span>ID:</span>
+                                  <span className="font-mono">{product.id}</span>
+                                </Typography>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3 sm:p-4 hidden lg:table-cell">
+                            <Typography variant="paragraph" color="blue-gray" className="max-w-xs line-clamp-2 text-sm">
+                              {product.description || 'Chưa có mô tả'}
+                            </Typography>
+                          </td>
+                          <td className="p-3 sm:p-4">
+                            <Typography variant="h6" color="green" className="font-bold text-sm">
+                              {formatCurrency(product.price)}
+                            </Typography>
+                            {product.originalPrice && product.originalPrice > product.price && (
+                              <Typography variant="small" color="red" className="line-through text-xs">
+                                {formatCurrency(product.originalPrice)}
+                              </Typography>
+                            )}
+                          </td>
+                          <td className="p-3 sm:p-4">
+                            <Chip
+                              value={product.active ? "Đang bán" : "Ngừng bán"}
+                              size="sm"
+                              color={product.active ? "green" : "red"}
+                              variant="gradient"
+                              className="rounded-full font-medium text-xs"
+                            />
+                          </td>
+                          <td className="p-3 sm:p-4">
+                            <div className="flex justify-center gap-1">
+                              <Tooltip content="Xem chi tiết">
+                                <Link to={`${product.id}`}>
+                                  <IconButton variant="text" color="blue" size="sm" className="hover:bg-blue-50">
+                                    <EyeIcon className="h-4 w-4" />
+                                  </IconButton>
+                                </Link>
+                              </Tooltip>
+                              <Tooltip content="Chỉnh sửa">
+                                <Link to={`update/${product.id}`}>
+                                  <IconButton variant="text" color="green" size="sm" className="hover:bg-green-50">
+                                    <PencilIcon className="h-4 w-4" />
+                                  </IconButton>
+                                </Link>
+                              </Tooltip>
+                              <Tooltip content="Xóa">
+                                <IconButton
+                                  variant="text"
+                                  color="red"
+                                  size="sm"
+                                  onClick={() => setDeleteDialog({ open: true, product })}
+                                  className="hover:bg-red-50"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </IconButton>
+                              </Tooltip>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Pagination Controls */}
             {filteredProducts.length > 0 && totalPages > 1 && (
-              <div className="flex flex-col lg:flex-row justify-between items-center gap-4 p-4 lg:p-6 bg-gray-50 border-t">
-                <Typography variant="small" color="gray">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-3 sm:p-4 lg:p-6 bg-gray-50 border-t">
+                <Typography variant="small" color="gray" className="text-xs sm:text-sm">
                   Hiển thị {page * size + 1}-{Math.min((page + 1) * size, totalElements)} của {totalElements} sản phẩm
                 </Typography>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
                   <Button 
                     variant="outlined" 
                     size="sm"
                     disabled={page === 0} 
                     onClick={() => setPage(0)}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm"
                   >
-                    Đầu tiên
+                    <ChevronDoubleLeftIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                    {!isMobile && "Đầu"}
                   </Button>
                   <Button 
                     variant="outlined" 
                     size="sm"
                     disabled={page === 0} 
                     onClick={() => setPage(prev => Math.max(prev - 1, 0))}
+                    className="px-2 sm:px-3 text-xs sm:text-sm"
                   >
-                    Trước
+                    <ChevronLeftIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                    {!isMobile && "Trước"}
                   </Button>
-                  <div className="flex items-center px-3 bg-white rounded border">
-                    <Typography variant="small" className="font-medium">
+                  <div className="flex items-center px-2 sm:px-3 bg-white rounded border">
+                    <Typography variant="small" className="font-medium text-xs sm:text-sm">
                       {page + 1} / {totalPages}
                     </Typography>
                   </div>
@@ -505,17 +622,20 @@ export function Profile() {
                     size="sm"
                     disabled={page + 1 >= totalPages} 
                     onClick={() => setPage(prev => Math.min(prev + 1, totalPages - 1))}
+                    className="px-2 sm:px-3 text-xs sm:text-sm"
                   >
-                    Sau
+                    {!isMobile && "Sau"}
+                    <ChevronRightIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button 
                     variant="outlined" 
                     size="sm"
                     disabled={page + 1 >= totalPages} 
                     onClick={() => setPage(totalPages - 1)}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm"
                   >
-                    Cuối cùng
+                    {!isMobile && "Cuối"}
+                    <ChevronDoubleRightIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </div>
@@ -528,31 +648,32 @@ export function Profile() {
       <Dialog 
         open={deleteDialog.open} 
         handler={() => setDeleteDialog({ open: false, product: null })}
-        size="sm"
+        size={isMobile ? "xs" : "sm"}
       >
-        <DialogHeader className="flex items-center gap-3 border-b pb-4">
-          <div className="p-2 bg-red-50 rounded-full">
-            <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+        <DialogHeader className="flex items-center gap-2 sm:gap-3 border-b pb-3 sm:pb-4">
+          <div className="p-1.5 sm:p-2 bg-red-50 rounded-full">
+            <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
           </div>
-          <Typography variant="h5" color="red">
+          <Typography variant="h5" color="red" className="text-lg sm:text-xl">
             Xác nhận xóa
           </Typography>
         </DialogHeader>
-        <DialogBody className="pt-6">
-          <Typography variant="paragraph" color="blue-gray" className="mb-4">
+        <DialogBody className="pt-4 sm:pt-6">
+          <Typography variant="paragraph" color="blue-gray" className="mb-3 sm:mb-4 text-sm sm:text-base">
             Bạn có chắc chắn muốn xóa sản phẩm <strong>"{deleteDialog.product?.name}"</strong> không?
           </Typography>
-          <Typography variant="small" color="red" className="flex items-center gap-1">
-            <ExclamationTriangleIcon className="h-4 w-4" />
+          <Typography variant="small" color="red" className="flex items-center gap-1 text-xs sm:text-sm">
+            <ExclamationTriangleIcon className="h-3 w-3 sm:h-4 sm:w-4" />
             Hành động này không thể hoàn tác.
           </Typography>
         </DialogBody>
-        <DialogFooter className="gap-3 border-t pt-4">
+        <DialogFooter className="gap-2 sm:gap-3 border-t pt-3 sm:pt-4">
           <Button
             variant="text"
             color="blue-gray"
             onClick={() => setDeleteDialog({ open: false, product: null })}
-            className="mr-auto"
+            className="mr-auto text-xs sm:text-sm"
+            size={isMobile ? "sm" : "md"}
           >
             Hủy bỏ
           </Button>
@@ -560,9 +681,10 @@ export function Profile() {
             variant="gradient"
             color="red"
             onClick={() => handleDelete(deleteDialog.product?.id)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+            size={isMobile ? "sm" : "md"}
           >
-            <TrashIcon className="h-4 w-4" />
+            <TrashIcon className="h-3 w-3 sm:h-4 sm:w-4" />
             Xóa sản phẩm
           </Button>
         </DialogFooter>
