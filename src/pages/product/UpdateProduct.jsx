@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import ProductService from "@/services/product/ProductService";
 import categoryService from "@/services/category/CategoryService";
 import tagService from "@/services/tags/TagService";
+import imageUploadService from "@/services/product/ImageUploadService";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Card,
@@ -31,11 +32,15 @@ import {
   PlusIcon,
   XMarkIcon,
   FolderIcon,
+  CloudArrowUpIcon,
+  TrashIcon,
+  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 
 const UpdateProduct = () => {
   const navigate = useNavigate();
   const { id: productId } = useParams();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
   const [formData, setFormData] = useState({
     name: "",
@@ -48,6 +53,14 @@ const UpdateProduct = () => {
     tagIds: [],
   });
 
+  // Thêm state cho upload ảnh
+  const [mainImageFile, setMainImageFile] = useState(null);
+  const [mainImagePreview, setMainImagePreview] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUrl, setImageUrl] = useState(""); // URL ảnh sau khi upload
+  const [imageUploaded, setImageUploaded] = useState(false); // Trạng thái đã upload chưa
+  const [uploadResult, setUploadResult] = useState(null); // Lưu kết quả upload
+
   const [categories, setCategories] = useState([]);
   const [flattenedCategories, setFlattenedCategories] = useState([]);
   const [tags, setTags] = useState([]);
@@ -57,7 +70,6 @@ const UpdateProduct = () => {
   const [fetchingTags, setFetchingTags] = useState(true);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
-  const [imagePreview, setImagePreview] = useState("");
   const [categoryDialog, setCategoryDialog] = useState(false);
   const [tagDialog, setTagDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -70,7 +82,6 @@ const UpdateProduct = () => {
     let result = [];
     
     categories.forEach(category => {
-      // Thêm danh mục cha
       result.push({
         ...category,
         level,
@@ -78,7 +89,6 @@ const UpdateProduct = () => {
         fullPath: parentName ? `${parentName} › ${category.name}` : category.name
       });
       
-      // Thêm danh mục con nếu có
       if (category.children && category.children.length > 0) {
         result = result.concat(flattenCategories(category.children, level + 1, category.name));
       }
@@ -108,7 +118,6 @@ const UpdateProduct = () => {
         
         setCategories(categoriesData);
         
-        // Làm phẳng danh sách category để hiển thị phân cấp
         const flattened = flattenCategories(categoriesData);
         setFlattenedCategories(flattened);
       } catch (err) {
@@ -176,18 +185,23 @@ const UpdateProduct = () => {
           .filter(id => id != null && id !== undefined)
           .map(id => String(id));
 
+        const currentImageUrl = data.mainImageUrl || "";
+
         setFormData({
           name: data.name || "",
           description: data.description || "",
           price: data.price != null ? String(data.price) : "",
           quantity: data.quantity != null ? String(data.quantity) : "",
-          mainImageUrl: data.mainImageUrl || "",
+          mainImageUrl: currentImageUrl,
           active: data.active ?? true,
           categoryIds: categoryIds,
           tagIds: tagIds,
         });
 
-        setImagePreview(data.mainImageUrl || "");
+        // Set image preview và URL từ dữ liệu hiện tại
+        setImageUrl(currentImageUrl);
+        setMainImagePreview(currentImageUrl);
+        setImageUploaded(!!currentImageUrl); // Đã có ảnh từ server
       } catch (error) {
         console.error("❌ Error fetching product:", error);
         setMessage(`Lỗi tải sản phẩm: ${error.message}`);
@@ -199,6 +213,148 @@ const UpdateProduct = () => {
     
     if (productId) fetchProduct();
   }, [productId]);
+
+  // 🔹 Xử lý chọn file ảnh
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Kiểm tra kích thước file (tối đa 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage("Kích thước ảnh không được vượt quá 5MB!");
+      setMessageType("error");
+      return;
+    }
+
+    // Kiểm tra định dạng file
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      setMessage("Chỉ chấp nhận file ảnh (JPEG, PNG, WEBP)!");
+      setMessageType("error");
+      return;
+    }
+
+    setMainImageFile(file);
+    setImageUploaded(false); // Reset trạng thái upload khi chọn ảnh mới
+
+    // Tạo preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setMainImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // 🔹 Xóa ảnh đã chọn
+  const removeSelectedImage = () => {
+    setMainImageFile(null);
+    setMainImagePreview("");
+    setImageUrl("");
+    setImageUploaded(false);
+    setUploadResult(null);
+    
+    // Cập nhật form data
+    setFormData(prev => ({
+      ...prev,
+      mainImageUrl: ""
+    }));
+  };
+
+  // 🔹 Upload ảnh lên server
+  const uploadImageToServer = async (file) => {
+    if (!file) {
+      setMessage("Vui lòng chọn ảnh trước khi upload");
+      setMessageType("error");
+      return null;
+    }
+
+    setUploadingImage(true);
+    try {
+      console.log("📤 Đang upload ảnh...", file.name);
+      
+      const res = await imageUploadService.uploadImage(file);
+      console.log("📦 Response from service:", res);
+
+      if (!res.success) {
+        setMessage(`❌ Upload thất bại: ${res.message}`);
+        setMessageType("error");
+        return null;
+      }
+
+      if (!res.data) {
+        setMessage("❌ Không nhận được dữ liệu từ server");
+        setMessageType("error");
+        return null;
+      }
+
+      // Lưu toàn bộ kết quả upload
+      setUploadResult(res.data);
+      
+      // KIỂM TRA CÁC TRƯỜNG CÓ THỂ CÓ URL
+      let imageUrl = "";
+      
+      // Debug: In tất cả fields trong response
+      console.log("🔍 Response data fields:", Object.keys(res.data));
+      console.log("🔍 Response data values:", res.data);
+      
+      // Tìm URL trong các field có thể có
+      const possibleUrlFields = ['url', 'imageUrl', 'path', 'filePath', 'location', 'image', 'fileName'];
+      for (const field of possibleUrlFields) {
+        if (res.data[field]) {
+          imageUrl = res.data[field];
+          console.log(`✅ Found URL in field '${field}':`, imageUrl);
+          break;
+        }
+      }
+      
+      if (!imageUrl) {
+        console.error("❌ Không tìm thấy URL trong response:", res.data);
+        setMessage("❌ Server không trả về URL ảnh");
+        setMessageType("error");
+        return null;
+      }
+      
+      // Xử lý URL
+      // Nếu là tên file, thêm prefix
+      if (!imageUrl.includes('/') && !imageUrl.startsWith('http')) {
+        imageUrl = `/static/${imageUrl}`;
+      }
+      
+      // Thêm base URL nếu cần
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        // Đảm bảo có dấu / ở đầu
+        if (!imageUrl.startsWith('/')) {
+          imageUrl = '/' + imageUrl;
+        }
+        imageUrl = API_BASE_URL + imageUrl;
+      }
+      
+      console.log("✅ Upload thành công. Final URL:", imageUrl);
+      
+      setImageUrl(imageUrl);
+      setImageUploaded(true);
+      
+      // Cập nhật form data với URL mới
+      setFormData(prev => ({
+        ...prev,
+        mainImageUrl: imageUrl
+      }));
+      
+      
+      setMessage("✅ Upload ảnh thành công!");
+      setMessageType("success");
+      return { url: imageUrl, data: res.data };
+      
+    } catch (error) {
+      console.error("❌ Lỗi khi upload ảnh:", error);
+      setMessage("❌ Upload ảnh thất bại!");
+      setMessageType("error");
+      return null;
+    } finally {
+      setUploadingImage(false);
+      
+    }
+  };
 
   // Tạo category mới
   const handleCreateCategory = async () => {
@@ -288,6 +444,32 @@ const UpdateProduct = () => {
     setLoading(true);
     setMessage("");
 
+    // Kiểm tra nếu đang upload ảnh
+    if (uploadingImage) {
+      setMessage("⚠️ Đang upload ảnh, vui lòng đợi...");
+      setMessageType("warning");
+      setLoading(false);
+      return;
+    }
+
+    // Nếu có ảnh mới nhưng chưa upload, upload ngay
+    if (mainImageFile && !imageUploaded) {
+      const result = await uploadImageToServer(mainImageFile);
+      if (!result || !result.url) {
+        setMessage("❌ Không thể upload ảnh. Vui lòng thử lại!");
+        setMessageType("error");
+        setLoading(false);
+        return;
+      }
+    } 
+    // Nếu không có ảnh (cả cũ và mới)
+    else if (!formData.mainImageUrl && !mainImageFile) {
+      setMessage("❌ Vui lòng chọn ảnh sản phẩm!");
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
     // Validation
     if (!formData.name.trim()) {
       setMessage("Vui lòng nhập tên sản phẩm!");
@@ -348,8 +530,11 @@ const UpdateProduct = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
 
+    // Nếu thay đổi URL ảnh thủ công
     if (name === "mainImageUrl") {
-      setImagePreview(value);
+      setImageUrl(value);
+      setMainImagePreview(value);
+      setImageUploaded(!!value); // Coi như đã upload nếu có URL
     }
   };
 
@@ -393,6 +578,33 @@ const UpdateProduct = () => {
   const selectedTags = tags.filter(tag => 
     formData.tagIds.includes(String(tag.id))
   );
+
+  // Hàm hiển thị full image URL
+  const getFullImageUrl = (url) => {
+    if (!url) return "";
+    
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    if (url.startsWith('/static/')) {
+      return API_BASE_URL + url;
+    }
+    
+    return API_BASE_URL + '/static/' + url;
+  };
+
+  // 🔄 Tự động upload khi chọn ảnh (tuỳ chọn)
+  useEffect(() => {
+    if (mainImageFile && !imageUploaded && !uploadingImage) {
+      // Tự động upload sau 0,1 giây nếu user không upload thủ công
+      const autoUploadTimer = setTimeout(() => {
+        uploadImageToServer(mainImageFile);
+      }, 100);
+      
+      return () => clearTimeout(autoUploadTimer);
+    }
+  }, [mainImageFile]);
 
   if (fetching) {
     return (
@@ -541,36 +753,148 @@ const UpdateProduct = () => {
                     </div>
                   </div>
 
-                  {/* Main Image */}
+                  {/* Main Image Upload */}
                   <div>
                     <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
                       <PhotoIcon className="h-5 w-5" />
                       Hình ảnh chính
                     </Typography>
-                    <Input
-                      label="URL hình ảnh chính"
-                      name="mainImageUrl"
-                      value={formData.mainImageUrl}
-                      onChange={handleChange}
-                      placeholder="https://example.com/image.jpg"
-                      required
-                      className="!border !border-gray-300 focus:!border-blue-500"
-                    />
-                    {imagePreview && (
-                      <div className="mt-3">
-                        <Typography variant="small" color="gray" className="mb-2">
-                          Preview:
-                        </Typography>
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="h-32 w-32 object-cover rounded-lg border-2 border-gray-200 shadow-md"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
+                    
+                    {!mainImagePreview ? (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
+                        <label htmlFor="imageUpload" className="cursor-pointer">
+                          <input
+                            type="file"
+                            id="imageUpload"
+                            accept="image/jpeg,image/png,image/webp,image/jpg"
+                            onChange={handleImageSelect}
+                            className="hidden"
+                          />
+                          <CloudArrowUpIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <Typography variant="h6" color="gray" className="mb-2">
+                            Click để upload ảnh mới
+                          </Typography>
+                          <Typography variant="small" color="gray">
+                            JPEG, PNG, WEBP (Tối đa 5MB)
+                          </Typography>
+                          <Typography variant="small" color="blue" className="mt-2">
+                            Hoặc nhập URL bên dưới
+                          </Typography>
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="border-2 border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <Typography variant="small" color="green" className="flex items-center gap-1">
+                              <PhotoIcon className="h-4 w-4" />
+                              {mainImageFile ? "Ảnh mới đã chọn" : "Ảnh hiện tại"}
+                              {imageUploaded && (
+                                <span className="text-blue-500 ml-2 flex items-center gap-1">
+                                  <CheckBadgeIcon className="h-4 w-4" />
+                                  Đã upload lên server
+                                </span>
+                              )}
+                            </Typography>
+                            <div className="flex gap-2">
+                              {!imageUploaded && mainImageFile && !uploadingImage && (
+                                <Button
+                                  size="sm"
+                                  color="green"
+                                  variant="gradient"
+                                  onClick={() => uploadImageToServer(mainImageFile)}
+                                  className="flex items-center gap-1"
+                                  disabled={uploadingImage}
+                                >
+                                  <CloudArrowUpIcon className="h-4 w-4" />
+                                  {uploadingImage ? 'Đang upload...' : 'Upload lên server'}
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                color="red"
+                                variant="outlined"
+                                onClick={removeSelectedImage}
+                                className="flex items-center gap-1"
+                                disabled={uploadingImage}
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                                Xóa
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <img
+                                src={mainImagePreview}
+                                alt="Preview"
+                                className="h-32 w-32 object-cover rounded-lg border-2 border-gray-200 shadow-md"
+                              />
+                              {uploadingImage && (
+                                <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                                  <Spinner className="h-8 w-8 text-white" />
+                                </div>
+                              )}
+                              {imageUploaded && !uploadingImage && (
+                                <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
+                                  <CheckBadgeIcon className="h-4 w-4" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <Typography variant="small" className="font-medium">
+                                {mainImageFile?.name || "Ảnh từ URL"}
+                              </Typography>
+                              {mainImageFile && (
+                                <Typography variant="small" color="gray">
+                                  {mainImageFile ? `${(mainImageFile.size / 1024 / 1024).toFixed(2)} MB` : ""}
+                                </Typography>
+                              )}
+                              {imageUrl && imageUploaded && (
+                                <div className="mt-2">
+                                  <Typography variant="small" color="blue" className="font-medium">
+                                    URL:
+                                  </Typography>
+                                  <Typography variant="small" color="blue" className="truncate max-w-xs">
+                                    {getFullImageUrl(imageUrl)}
+                                  </Typography>
+                                </div>
+                              )}
+                              {!imageUploaded && mainImageFile && (
+                                <div className="mt-2">
+                                  <Typography variant="small" color="amber" className="font-medium flex items-center gap-1">
+                                    <ExclamationCircleIcon className="h-4 w-4" />
+                                    ⚠️ Chưa upload lên server
+                                  </Typography>
+                                  <Typography variant="small" color="gray">
+                                    Nhấn "Upload lên server" trước khi cập nhật
+                                  </Typography>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
+                    
+                    {/* Input URL (fallback) */}
+                    <div className="mt-4">
+                      <Typography variant="small" color="gray" className="mb-2">
+                        Hoặc nhập URL ảnh:
+                      </Typography>
+                      <Input
+                        label="URL hình ảnh chính"
+                        name="mainImageUrl"
+                        value={formData.mainImageUrl}
+                        onChange={handleChange}
+                        placeholder="https://example.com/image.jpg"
+                        className="!border !border-gray-300 focus:!border-blue-500"
+                      />
+                    </div>
+                    
+                    <Typography variant="small" color="gray" className="mt-2">
+                      Ảnh này sẽ hiển thị ở trang danh sách và là ảnh đại diện
+                    </Typography>
                   </div>
 
                   {/* Categories - ĐÃ CẬP NHẬT HIỂN THỊ PHÂN CẤP */}
@@ -580,7 +904,7 @@ const UpdateProduct = () => {
                         <FolderIcon className="h-5 w-5" />
                         Danh mục
                       </Typography>
-                      {/* <Button
+                      <Button
                         size="sm"
                         variant="outlined"
                         color="blue"
@@ -589,7 +913,7 @@ const UpdateProduct = () => {
                       >
                         <PlusIcon className="h-4 w-4" />
                         Thêm danh mục
-                      </Button> */}
+                      </Button>
                     </div>
 
                     {fetchingCategories ? (
@@ -669,7 +993,7 @@ const UpdateProduct = () => {
                         <TagIcon className="h-5 w-5" />
                         Tags
                       </Typography>
-                      {/* <Button
+                      <Button
                         size="sm"
                         variant="outlined"
                         color="green"
@@ -678,7 +1002,7 @@ const UpdateProduct = () => {
                       >
                         <PlusIcon className="h-4 w-4" />
                         Thêm tag
-                      </Button> */}
+                      </Button>
                     </div>
 
                     {fetchingTags ? (
@@ -763,6 +1087,7 @@ const UpdateProduct = () => {
                       color="red"
                       className="flex-1"
                       onClick={() => navigate("/dashboard/products")}
+                      disabled={loading || uploadingImage}
                     >
                       Hủy bỏ
                     </Button>
@@ -770,7 +1095,7 @@ const UpdateProduct = () => {
                       type="submit"
                       className="flex-1 flex items-center justify-center gap-2"
                       color="blue"
-                      disabled={loading}
+                      disabled={loading || uploadingImage}
                     >
                       {loading ? (
                         <>
@@ -800,15 +1125,27 @@ const UpdateProduct = () => {
                 </Typography>
 
                 <div className="space-y-4">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Product preview"
-                      className="w-full h-48 object-cover rounded-lg shadow-md"
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/300x200?text=Ảnh+lỗi";
-                      }}
-                    />
+                  {mainImagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={mainImagePreview}
+                        alt="Product preview"
+                        className="w-full h-48 object-cover rounded-lg shadow-md"
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/300x200?text=Ảnh+lỗi";
+                        }}
+                      />
+                      {uploadingImage && (
+                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                          <Spinner className="h-8 w-8 text-white" />
+                        </div>
+                      )}
+                      {imageUploaded && !uploadingImage && (
+                        <div className="absolute top-2 right-2 bg-green-500 text-white p-2 rounded-full">
+                          <CheckBadgeIcon className="h-4 w-4" />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
                       <PhotoIcon className="h-12 w-12 text-gray-400" />

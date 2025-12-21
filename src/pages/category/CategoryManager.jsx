@@ -11,7 +11,9 @@ import {
   FolderIcon,
   CubeIcon,
   ChartBarIcon,
-  TagIcon
+  TagIcon,
+  XMarkIcon,
+  CheckIcon
 } from "@heroicons/react/24/outline";
 import {
   Card,
@@ -22,7 +24,10 @@ import {
   Spinner,
   Alert,
   Chip,
-  Badge,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
 } from "@material-tailwind/react";
 
 // Component hiển thị cây con
@@ -73,7 +78,7 @@ const CategoryChildren = ({ node, onDelete, onEdit }) => {
                     <PencilIcon className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => onDelete(child.id)}
+                    onClick={() => onDelete(child.id, child.name)}
                     className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
                   >
                     <TrashIcon className="w-4 h-4" />
@@ -159,7 +164,7 @@ const CategoryNode = ({ node, onSelect, isSelected, onDelete, onEdit }) => {
               <PencilIcon className="w-4 h-4" />
             </button>
             <button
-              onClick={() => onDelete(node.id)}
+              onClick={() => onDelete(node.id, node.name)}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Xóa"
             >
@@ -197,6 +202,8 @@ const CategoryManager = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [activeTab, setActiveTab] = useState("tree");
   const [editingCategory, setEditingCategory] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState({ id: null, name: "" });
 
   useEffect(() => {
     fetchCategories();
@@ -209,19 +216,23 @@ const CategoryManager = () => {
       setAllCategories(res.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      setMessage("Lỗi khi tải danh sách danh mục");
-      setMessageType("error");
+      showMessage("Lỗi khi tải danh sách danh mục", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const showMessage = (msg, type = "success") => {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 3000);
   };
 
   const handleCreateCategory = async (e) => {
     e.preventDefault();
 
     if (!newCategoryName.trim()) {
-      setMessage("Vui lòng nhập tên danh mục!");
-      setMessageType("error");
+      showMessage("Vui lòng nhập tên danh mục!", "error");
       return;
     }
 
@@ -237,8 +248,7 @@ const CategoryManager = () => {
           payload.categoryLevel = parentCategory.categoryLevel + 1;
           
           if (payload.categoryLevel > 3) {
-            setMessage("Không thể tạo danh mục cấp 4 trở lên!");
-            setMessageType("error");
+            showMessage("Không thể tạo danh mục cấp 4 trở lên!", "error");
             return;
           }
         }
@@ -249,47 +259,49 @@ const CategoryManager = () => {
 
       await categoryService.createCategory(payload);
       
-      setMessage("Tạo danh mục thành công!");
-      setMessageType("success");
-      setNewCategoryName("");
-      setParentId("");
-      
-      setTimeout(() => {
-        fetchCategories();
-        setMessage("");
-      }, 300);
+      showMessage("Tạo danh mục thành công!", "success");
+      resetForm();
+      fetchCategories();
 
     } catch (error) {
       console.error("Error creating category:", error);
-      setMessage(error.response?.data?.message || "Tạo danh mục thất bại!");
-      setMessageType("error");
+      showMessage(error.response?.data?.message || "Tạo danh mục thất bại!", "error");
     }
   };
 
-  const handleDeleteCategory = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa danh mục này?")) {
-      return;
-    }
+  // XÓA DANH MỤC
+  const handleDeleteCategory = async (id, name) => {
+    setCategoryToDelete({ id, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!categoryToDelete.id) return;
 
     try {
-      await categoryService.deleteCategory(id);
-      setMessage("Xóa danh mục thành công!");
-      setMessageType("success");
+      await categoryService.deleteCategory(categoryToDelete.id);
+      showMessage("Xóa danh mục thành công!", "success");
       
+      // Refresh danh sách
       fetchCategories();
       
-      if (selectedCategory?.id === id) {
+      // Nếu đang xem danh mục bị xóa, clear selection
+      if (selectedCategory?.id === categoryToDelete.id) {
         setSelectedCategory(null);
       }
+      
+      // Đóng dialog
+      setDeleteDialogOpen(false);
+      setCategoryToDelete({ id: null, name: "" });
 
-      setTimeout(() => setMessage(""), 2000);
     } catch (error) {
       console.error("Error deleting category:", error);
-      setMessage("Xóa danh mục thất bại! Có thể danh mục đang được sử dụng.");
-      setMessageType("error");
+      showMessage(error.response?.data?.message || "Xóa danh mục thất bại! Có thể danh mục đang được sử dụng.", "error");
+      setDeleteDialogOpen(false);
     }
   };
 
+  // CHỈNH SỬA DANH MỤC
   const handleEditCategory = (category) => {
     setEditingCategory(category);
     setNewCategoryName(category.name);
@@ -301,8 +313,7 @@ const CategoryManager = () => {
     e.preventDefault();
 
     if (!newCategoryName.trim() || !editingCategory) {
-      setMessage("Vui lòng nhập tên danh mục!");
-      setMessageType("error");
+      showMessage("Vui lòng nhập tên danh mục!", "error");
       return;
     }
 
@@ -311,6 +322,7 @@ const CategoryManager = () => {
         name: newCategoryName.trim(),
       };
 
+      // Nếu có parentId mới
       if (parentId) {
         const parentCategory = allCategories.find(cat => cat.id === Number(parentId));
         if (parentCategory) {
@@ -318,41 +330,44 @@ const CategoryManager = () => {
           payload.categoryLevel = parentCategory.categoryLevel + 1;
           
           if (payload.categoryLevel > 3) {
-            setMessage("Không thể chuyển danh mục lên cấp 4!");
-            setMessageType("error");
+            showMessage("Không thể chuyển danh mục lên cấp 4!", "error");
             return;
           }
         }
       } else {
+        // Nếu không có parentId (chuyển thành danh mục gốc)
         payload.categoryLevel = 1;
         payload.parentId = null;
       }
 
-      await categoryService.updateCategory(editingCategory.id, payload);
+      // Gọi API update - theo cấu trúc của service hiện tại
+      await categoryService.updateCategory({
+        id: editingCategory.id,
+        ...payload
+      });
       
-      setMessage("Cập nhật danh mục thành công!");
-      setMessageType("success");
-      setNewCategoryName("");
-      setParentId("");
-      setEditingCategory(null);
-      
+      showMessage("Cập nhật danh mục thành công!", "success");
+      resetForm();
       fetchCategories();
 
-      setTimeout(() => setMessage(""), 2000);
     } catch (error) {
       console.error("Error updating category:", error);
-      setMessage(error.response?.data?.message || "Cập nhật danh mục thất bại!");
-      setMessageType("error");
+      showMessage(error.response?.data?.message || "Cập nhật danh mục thất bại!", "error");
     }
   };
 
-  const cancelEdit = () => {
-    setEditingCategory(null);
+  const resetForm = () => {
     setNewCategoryName("");
     setParentId("");
+    setEditingCategory(null);
   };
 
-  // Calculate statistics
+  const cancelEdit = () => {
+    resetForm();
+    setActiveTab("tree");
+  };
+
+  // Tính toán thống kê
   const stats = {
     total: allCategories.length,
     level1: allCategories.filter(cat => cat.categoryLevel === 1).length,
@@ -482,7 +497,10 @@ const CategoryManager = () => {
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8">
                 <button
-                  onClick={() => setActiveTab("tree")}
+                  onClick={() => {
+                    setActiveTab("tree");
+                    if (editingCategory) cancelEdit();
+                  }}
                   className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
                     activeTab === "tree"
                       ? "border-blue-500 text-blue-600"
@@ -495,9 +513,7 @@ const CategoryManager = () => {
                 <button
                   onClick={() => {
                     setActiveTab("create");
-                    setEditingCategory(null);
-                    setNewCategoryName("");
-                    setParentId("");
+                    if (!editingCategory) resetForm();
                   }}
                   className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
                     activeTab === "create"
@@ -505,8 +521,17 @@ const CategoryManager = () => {
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <PlusIcon className="h-4 w-4" />
-                  {editingCategory ? "Chỉnh sửa" : "Tạo mới"}
+                  {/* {editingCategory ? (
+                    <>
+                      <PencilIcon className="h-4 w-4" />
+                      Chỉnh sửa
+                    </>
+                  ) : (
+                    <>
+                      <PlusIcon className="h-4 w-4" />
+                      Tạo mới
+                    </>
+                  )} */}
                 </button>
               </nav>
             </div>
@@ -523,15 +548,6 @@ const CategoryManager = () => {
                     <CubeIcon className="h-5 w-5 text-blue-500" />
                     Cấu trúc danh mục
                   </Typography>
-                  {/* <div className="flex items-center gap-2">
-                    <Typography variant="small" color="gray">
-                      Tổng:
-                    </Typography>
-                    <Badge color="blue" content={stats.total} />
-                    <Typography variant="small" color="gray">
-                      danh mục
-                    </Typography>
-                  </div> */}
                 </div>
 
                 <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
@@ -645,8 +661,17 @@ const CategoryManager = () => {
             <Card className="shadow-xl border-0">
               <CardBody className="p-6">
                 <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
-                  <PlusIcon className="h-5 w-5 text-green-500" />
-                  {editingCategory ? "Chỉnh sửa danh mục" : "Tạo danh mục mới"}
+                  {editingCategory ? (
+                    <>
+                      <PencilIcon className="h-5 w-5 text-blue-500" />
+                      Chỉnh sửa danh mục
+                    </>
+                  ) : (
+                    <>
+                      <PlusIcon className="h-5 w-5 text-green-500" />
+                      Tạo danh mục mới
+                    </>
+                  )}
                 </Typography>
                 
                 <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
@@ -676,6 +701,7 @@ const CategoryManager = () => {
                       <option value="">-- Không có (Tạo danh mục gốc) --</option>
                       {allCategories
                         .filter((cat) => cat.categoryLevel < 3)
+                        .filter((cat) => !editingCategory || cat.id !== editingCategory.id) // Không cho chọn chính nó
                         .map((cat) => (
                           <option key={cat.id} value={cat.id}>
                             {cat.name} (Cấp {cat.categoryLevel})
@@ -684,7 +710,10 @@ const CategoryManager = () => {
                       }
                     </select>
                     <Typography variant="small" color="gray" className="mt-1">
-                      Để trống để tạo danh mục gốc (cấp 1)
+                      {editingCategory 
+                        ? "Chọn danh mục cha mới (không chọn để giữ nguyên)"
+                        : "Để trống để tạo danh mục gốc (cấp 1)"
+                      }
                     </Typography>
                   </div>
                   
@@ -695,18 +724,28 @@ const CategoryManager = () => {
                         onClick={cancelEdit}
                         variant="outlined"
                         color="red"
-                        className="flex-1"
+                        className="flex-1 flex items-center justify-center gap-2"
                       >
+                        <XMarkIcon className="h-4 w-4" />
                         Hủy
                       </Button>
                     )}
                     <Button
                       type="submit"
                       className={`${editingCategory ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2`}
-                      color="blue"
+                      color={editingCategory ? "blue" : "green"}
                     >
-                      <PlusIcon className="h-4 w-4" />
-                      {editingCategory ? "Cập nhật" : "Tạo danh mục"}
+                      {editingCategory ? (
+                        <>
+                          <CheckIcon className="h-4 w-4" />
+                          Cập nhật
+                        </>
+                      ) : (
+                        <>
+                          <PlusIcon className="h-4 w-4" />
+                          Tạo danh mục
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -725,6 +764,49 @@ const CategoryManager = () => {
             </Card>
           </div>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} handler={setDeleteDialogOpen}>
+          <DialogHeader className="flex items-center gap-2">
+            <TrashIcon className="h-5 w-5 text-red-500" />
+            Xác nhận xóa danh mục
+          </DialogHeader>
+          <DialogBody>
+            <Typography variant="paragraph" className="mb-4">
+              Bạn có chắc chắn muốn xóa danh mục <strong>"{categoryToDelete.name}"</strong> không?
+            </Typography>
+            <Alert color="red" className="mb-4">
+              <Typography variant="small" className="font-bold">
+                CẢNH BÁO:
+              </Typography>
+              <Typography variant="small">
+                Hành động này sẽ xóa vĩnh viễn danh mục và tất cả danh mục con của nó!
+              </Typography>
+            </Alert>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              variant="text"
+              color="gray"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setCategoryToDelete({ id: null, name: "" });
+              }}
+              className="mr-2"
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="gradient"
+              color="red"
+              onClick={confirmDelete}
+              className="flex items-center gap-2"
+            >
+              <TrashIcon className="h-4 w-4" />
+              Xóa
+            </Button>
+          </DialogFooter>
+        </Dialog>
       </div>
     </div>
   );
