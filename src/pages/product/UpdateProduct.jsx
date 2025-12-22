@@ -53,13 +53,13 @@ const UpdateProduct = () => {
     tagIds: [],
   });
 
-  // Thêm state cho upload ảnh
+  // Add state for image upload
   const [mainImageFile, setMainImageFile] = useState(null);
   const [mainImagePreview, setMainImagePreview] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [imageUrl, setImageUrl] = useState(""); // URL ảnh sau khi upload
-  const [imageUploaded, setImageUploaded] = useState(false); // Trạng thái đã upload chưa
-  const [uploadResult, setUploadResult] = useState(null); // Lưu kết quả upload
+  const [imageUrl, setImageUrl] = useState(""); // URL after upload
+  const [imageUploaded, setImageUploaded] = useState(false); // Whether image has been uploaded
+  const [uploadResult, setUploadResult] = useState(null); // Store upload result
 
   const [categories, setCategories] = useState([]);
   const [flattenedCategories, setFlattenedCategories] = useState([]);
@@ -77,7 +77,7 @@ const UpdateProduct = () => {
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [creatingTag, setCreatingTag] = useState(false);
 
-  // 🔄 Hàm làm phẳng cấu trúc danh mục để hiển thị phân cấp
+  // 🔄 Function to flatten category structure for hierarchical display
   const flattenCategories = (categories, level = 0, parentName = "") => {
     let result = [];
     
@@ -97,6 +97,32 @@ const UpdateProduct = () => {
     return result;
   };
 
+  // Function to check stock status
+  const getStockStatus = () => {
+    const quantity = Number(formData.quantity) || 0;
+    if (quantity > 0) {
+      return {
+        status: "in-stock",
+        text: "In Stock",
+        color: "green"
+      };
+    } else {
+      return {
+        status: "out-of-stock", 
+        text: "Out of Stock",
+        color: "red"
+      };
+    }
+  };
+
+  useEffect(() => {
+    const quantity = Number(formData.quantity);
+    if (quantity <= 0 && formData.active) {
+      // Show warning but don't automatically change
+      console.log("⚠️ Product is out of stock but still set to 'Active' status");
+    }
+  }, [formData.quantity, formData.active]);
+
   // Load categories
   useEffect(() => {
     const fetchCategories = async () => {
@@ -112,7 +138,7 @@ const UpdateProduct = () => {
         } else if (Array.isArray(res?.data?.data)) {
           categoriesData = res.data.data;
         } else {
-          console.warn("⚠️ Dữ liệu category không đúng định dạng:", res);
+          console.warn("⚠️ Category data is not in the correct format:", res);
           categoriesData = [];
         }
         
@@ -122,7 +148,7 @@ const UpdateProduct = () => {
         setFlattenedCategories(flattened);
       } catch (err) {
         console.error("❌ Error fetching categories:", err);
-        setMessage("Không thể tải danh mục sản phẩm!");
+        setMessage("Unable to load product categories!");
         setMessageType("error");
       } finally {
         setFetchingCategories(false);
@@ -147,14 +173,14 @@ const UpdateProduct = () => {
         } else if (Array.isArray(res?.data?.data)) {
           tagsData = res.data.data;
         } else {
-          console.warn("⚠️ Dữ liệu tag không đúng định dạng:", res);
+          console.warn("⚠️ Tag data is not in the correct format:", res);
           tagsData = [];
         }
         
         setTags(tagsData);
       } catch (err) {
         console.error("❌ Error fetching tags:", err);
-        setMessage("Không thể tải tags!");
+        setMessage("Unable to load tags!");
         setMessageType("error");
       } finally {
         setFetchingTags(false);
@@ -198,13 +224,13 @@ const UpdateProduct = () => {
           tagIds: tagIds,
         });
 
-        // Set image preview và URL từ dữ liệu hiện tại
+        // Set image preview and URL from current data
         setImageUrl(currentImageUrl);
         setMainImagePreview(currentImageUrl);
-        setImageUploaded(!!currentImageUrl); // Đã có ảnh từ server
+        setImageUploaded(!!currentImageUrl); // Already has image from server
       } catch (error) {
         console.error("❌ Error fetching product:", error);
-        setMessage(`Lỗi tải sản phẩm: ${error.message}`);
+        setMessage(`Error loading product: ${error.message}`);
         setMessageType("error");
       } finally {
         setFetching(false);
@@ -214,30 +240,30 @@ const UpdateProduct = () => {
     if (productId) fetchProduct();
   }, [productId]);
 
-  // 🔹 Xử lý chọn file ảnh
+  // 🔹 Handle image file selection
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Kiểm tra kích thước file (tối đa 5MB)
+    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setMessage("Kích thước ảnh không được vượt quá 5MB!");
+      setMessage("Image size should not exceed 5MB!");
       setMessageType("error");
       return;
     }
 
-    // Kiểm tra định dạng file
+    // Check file format
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
     if (!validTypes.includes(file.type)) {
-      setMessage("Chỉ chấp nhận file ảnh (JPEG, PNG, WEBP)!");
+      setMessage("Only image files are accepted (JPEG, PNG, WEBP)!");
       setMessageType("error");
       return;
     }
 
     setMainImageFile(file);
-    setImageUploaded(false); // Reset trạng thái upload khi chọn ảnh mới
+    setImageUploaded(false); // Reset upload status when selecting new image
 
-    // Tạo preview
+    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setMainImagePreview(reader.result);
@@ -245,7 +271,7 @@ const UpdateProduct = () => {
     reader.readAsDataURL(file);
   };
 
-  // 🔹 Xóa ảnh đã chọn
+  // 🔹 Remove selected image
   const removeSelectedImage = () => {
     setMainImageFile(null);
     setMainImagePreview("");
@@ -253,51 +279,51 @@ const UpdateProduct = () => {
     setImageUploaded(false);
     setUploadResult(null);
     
-    // Cập nhật form data
+    // Update form data
     setFormData(prev => ({
       ...prev,
       mainImageUrl: ""
     }));
   };
 
-  // 🔹 Upload ảnh lên server
+  // 🔹 Upload image to server
   const uploadImageToServer = async (file) => {
     if (!file) {
-      setMessage("Vui lòng chọn ảnh trước khi upload");
+      setMessage("Please select an image before uploading");
       setMessageType("error");
       return null;
     }
 
     setUploadingImage(true);
     try {
-      console.log("📤 Đang upload ảnh...", file.name);
+      console.log("📤 Uploading image...", file.name);
       
       const res = await imageUploadService.uploadImage(file);
       console.log("📦 Response from service:", res);
 
       if (!res.success) {
-        setMessage(`❌ Upload thất bại: ${res.message}`);
+        setMessage(`❌ Upload failed: ${res.message}`);
         setMessageType("error");
         return null;
       }
 
       if (!res.data) {
-        setMessage("❌ Không nhận được dữ liệu từ server");
+        setMessage("❌ No data received from server");
         setMessageType("error");
         return null;
       }
 
-      // Lưu toàn bộ kết quả upload
+      // Store entire upload result
       setUploadResult(res.data);
       
-      // KIỂM TRA CÁC TRƯỜNG CÓ THỂ CÓ URL
+      // CHECK FOR POSSIBLE URL FIELDS
       let imageUrl = "";
       
-      // Debug: In tất cả fields trong response
+      // Debug: Print all fields in response
       console.log("🔍 Response data fields:", Object.keys(res.data));
       console.log("🔍 Response data values:", res.data);
       
-      // Tìm URL trong các field có thể có
+      // Find URL in possible fields
       const possibleUrlFields = ['url', 'imageUrl', 'path', 'filePath', 'location', 'image', 'fileName'];
       for (const field of possibleUrlFields) {
         if (res.data[field]) {
@@ -308,58 +334,56 @@ const UpdateProduct = () => {
       }
       
       if (!imageUrl) {
-        console.error("❌ Không tìm thấy URL trong response:", res.data);
-        setMessage("❌ Server không trả về URL ảnh");
+        console.error("❌ URL not found in response:", res.data);
+        setMessage("❌ Server did not return image URL");
         setMessageType("error");
         return null;
       }
       
-      // Xử lý URL
-      // Nếu là tên file, thêm prefix
+      // Process URL
+      // If it's a filename, add prefix
       if (!imageUrl.includes('/') && !imageUrl.startsWith('http')) {
         imageUrl = `/static/${imageUrl}`;
       }
       
-      // Thêm base URL nếu cần
+      // Add base URL if needed
       if (imageUrl && !imageUrl.startsWith('http')) {
-        // Đảm bảo có dấu / ở đầu
+        // Ensure leading slash
         if (!imageUrl.startsWith('/')) {
           imageUrl = '/' + imageUrl;
         }
         imageUrl = API_BASE_URL + imageUrl;
       }
       
-      console.log("✅ Upload thành công. Final URL:", imageUrl);
+      console.log("✅ Upload successful. Final URL:", imageUrl);
       
       setImageUrl(imageUrl);
       setImageUploaded(true);
       
-      // Cập nhật form data với URL mới
+      // Update form data with new URL
       setFormData(prev => ({
         ...prev,
         mainImageUrl: imageUrl
       }));
       
-      
-      setMessage("✅ Upload ảnh thành công!");
+      setMessage("✅ Image uploaded successfully!");
       setMessageType("success");
       return { url: imageUrl, data: res.data };
       
     } catch (error) {
-      console.error("❌ Lỗi khi upload ảnh:", error);
-      setMessage("❌ Upload ảnh thất bại!");
+      console.error("❌ Error uploading image:", error);
+      setMessage("❌ Image upload failed!");
       setMessageType("error");
       return null;
     } finally {
       setUploadingImage(false);
-      
     }
   };
 
-  // Tạo category mới
+  // Create new category
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {
-      setMessage("Vui lòng nhập tên danh mục!");
+      setMessage("Please enter category name!");
       setMessageType("error");
       return;
     }
@@ -372,10 +396,10 @@ const UpdateProduct = () => {
       const newCat = res?.data?.data || res?.data || res;
 
       if (!newCat || !newCat.id) {
-        throw new Error("Không nhận được ID category từ server");
+        throw new Error("Category ID not received from server");
       }
 
-      // Cập nhật danh sách categories và làm phẳng lại
+      // Update categories list and flatten again
       const updatedCategories = [...categories, newCat];
       setCategories(updatedCategories);
       const flattened = flattenCategories(updatedCategories);
@@ -389,21 +413,21 @@ const UpdateProduct = () => {
         categoryIds: [...prev.categoryIds, String(newCat.id)]
       }));
 
-      setMessage("Tạo danh mục mới thành công!");
+      setMessage("New category created successfully!");
       setMessageType("success");
     } catch (err) {
-      console.error("❌ Lỗi khi tạo danh mục:", err);
-      setMessage("Tạo danh mục thất bại: " + err.message);
+      console.error("❌ Error creating category:", err);
+      setMessage("Category creation failed: " + err.message);
       setMessageType("error");
     } finally {
       setCreatingCategory(false);
     }
   };
 
-  // Tạo tag mới
+  // Create new tag
   const handleCreateTag = async () => {
     if (!newTagName.trim()) {
-      setMessage("Vui lòng nhập tên tag!");
+      setMessage("Please enter tag name!");
       setMessageType("error");
       return;
     }
@@ -416,7 +440,7 @@ const UpdateProduct = () => {
       const newTag = res?.data?.data || res?.data || res;
 
       if (!newTag || !newTag.id) {
-        throw new Error("Không nhận được ID tag từ server");
+        throw new Error("Tag ID not received from server");
       }
 
       setTags((prev) => [...prev, newTag]);
@@ -428,11 +452,11 @@ const UpdateProduct = () => {
         tagIds: [...prev.tagIds, String(newTag.id)]
       }));
 
-      setMessage("Tạo tag mới thành công!");
+      setMessage("New tag created successfully!");
       setMessageType("success");
     } catch (err) {
-      console.error("❌ Lỗi khi tạo tag:", err);
-      setMessage("Tạo tag thất bại: " + err.message);
+      console.error("❌ Error creating tag:", err);
+      setMessage("Tag creation failed: " + err.message);
       setMessageType("error");
     } finally {
       setCreatingTag(false);
@@ -444,27 +468,27 @@ const UpdateProduct = () => {
     setLoading(true);
     setMessage("");
 
-    // Kiểm tra nếu đang upload ảnh
+    // Check if image is being uploaded
     if (uploadingImage) {
-      setMessage("⚠️ Đang upload ảnh, vui lòng đợi...");
+      setMessage("⚠️ Image is uploading, please wait...");
       setMessageType("warning");
       setLoading(false);
       return;
     }
 
-    // Nếu có ảnh mới nhưng chưa upload, upload ngay
+    // If there's a new image but not uploaded yet, upload immediately
     if (mainImageFile && !imageUploaded) {
       const result = await uploadImageToServer(mainImageFile);
       if (!result || !result.url) {
-        setMessage("❌ Không thể upload ảnh. Vui lòng thử lại!");
+        setMessage("❌ Unable to upload image. Please try again!");
         setMessageType("error");
         setLoading(false);
         return;
       }
     } 
-    // Nếu không có ảnh (cả cũ và mới)
+    // If there's no image (both old and new)
     else if (!formData.mainImageUrl && !mainImageFile) {
-      setMessage("❌ Vui lòng chọn ảnh sản phẩm!");
+      setMessage("❌ Please select a product image!");
       setMessageType("error");
       setLoading(false);
       return;
@@ -472,25 +496,59 @@ const UpdateProduct = () => {
 
     // Validation
     if (!formData.name.trim()) {
-      setMessage("Vui lòng nhập tên sản phẩm!");
+      setMessage("Please enter product name!");
       setMessageType("error");
       setLoading(false);
       return;
     }
 
     if (!formData.price || Number(formData.price) <= 0) {
-      setMessage("Vui lòng nhập giá sản phẩm hợp lệ!");
+      setMessage("Please enter a valid product price!");
       setMessageType("error");
       setLoading(false);
       return;
     }
 
     if (!formData.quantity || Number(formData.quantity) < 0) {
-      setMessage("Vui lòng nhập số lượng hợp lệ!");
+      setMessage("Please enter a valid quantity!");
       setMessageType("error");
       setLoading(false);
       return;
     }
+
+    // Check stock logic and status
+    const quantity = Number(formData.quantity);
+    const isActive = formData.active;
+    
+    // if (quantity <= 0 && isActive) {
+    //   // Product is out of stock but still active
+    //   const confirm = window.confirm(
+    //     "⚠️ WARNING: Product is out of stock but still set to 'Active' status. " +
+    //     "This may confuse customers. " +
+    //     "Do you want to automatically switch to 'Inactive' status?"
+    //   );
+      
+    //   if (confirm) {
+    //     setFormData(prev => ({
+    //       ...prev,
+    //       active: false
+    //     }));
+    //   }
+    // } else if (quantity > 0 && !isActive) {
+    //   // Product is in stock but inactive
+    //   const confirm = window.confirm(
+    //     "ℹ️ NOTIFICATION: Product is in stock but set to 'Inactive' status. " +
+    //     "Product will not be displayed in the store. " +
+    //     "Do you want to automatically switch to 'Active' status?"
+    //   );
+      
+    //   if (confirm) {
+    //     setFormData(prev => ({
+    //       ...prev,
+    //       active: true
+    //     }));
+    //   }
+    // }
 
     try {
       const payload = {
@@ -507,7 +565,7 @@ const UpdateProduct = () => {
       console.log("📤 Payload:", payload);
 
       await ProductService.updateProduct(productId, payload);
-      setMessage("✅ Cập nhật sản phẩm thành công!");
+      setMessage("✅ Product updated successfully!");
       setMessageType("success");
       
       setTimeout(() => {
@@ -516,7 +574,7 @@ const UpdateProduct = () => {
       }, 300);
     } catch (error) {
       console.error("❌ Error updating product:", error);
-      setMessage(`❌ Lỗi cập nhật: ${error.response?.data?.message || error.message}`);
+      setMessage(`❌ Update error: ${error.response?.data?.message || error.message}`);
       setMessageType("error");
     } finally {
       setLoading(false);
@@ -530,11 +588,11 @@ const UpdateProduct = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    // Nếu thay đổi URL ảnh thủ công
+    // If manually changing image URL
     if (name === "mainImageUrl") {
       setImageUrl(value);
       setMainImagePreview(value);
-      setImageUploaded(!!value); // Coi như đã upload nếu có URL
+      setImageUploaded(!!value); // Consider as uploaded if URL exists
     }
   };
 
@@ -579,7 +637,7 @@ const UpdateProduct = () => {
     formData.tagIds.includes(String(tag.id))
   );
 
-  // Hàm hiển thị full image URL
+  // Function to display full image URL
   const getFullImageUrl = (url) => {
     if (!url) return "";
     
@@ -594,10 +652,10 @@ const UpdateProduct = () => {
     return API_BASE_URL + '/static/' + url;
   };
 
-  // 🔄 Tự động upload khi chọn ảnh (tuỳ chọn)
+  // 🔄 Auto upload when selecting image (optional)
   useEffect(() => {
     if (mainImageFile && !imageUploaded && !uploadingImage) {
-      // Tự động upload sau 0,1 giây nếu user không upload thủ công
+      // Auto upload after 0.1 seconds if user doesn't upload manually
       const autoUploadTimer = setTimeout(() => {
         uploadImageToServer(mainImageFile);
       }, 100);
@@ -612,15 +670,17 @@ const UpdateProduct = () => {
         <div className="text-center">
           <Spinner className="h-12 w-12 text-blue-500 mx-auto mb-4" />
           <Typography variant="h5" color="blue-gray" className="mb-2">
-            Đang tải thông tin sản phẩm...
+            Loading product information...
           </Typography>
           <Typography variant="small" color="gray">
-            Vui lòng chờ trong giây lát
+            Please wait a moment
           </Typography>
         </div>
       </div>
     );
   }
+
+  const stockStatus = getStockStatus();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -635,10 +695,10 @@ const UpdateProduct = () => {
                 </div>
                 <div>
                   <Typography variant="h2" className="text-white font-bold mb-2">
-                    Cập nhật Sản Phẩm
+                    Update Product
                   </Typography>
                   <Typography variant="paragraph" className="text-blue-100">
-                    Chỉnh sửa thông tin sản phẩm #{productId}
+                    Edit product information #{productId}
                   </Typography>
                 </div>
               </div>
@@ -649,7 +709,7 @@ const UpdateProduct = () => {
                 onClick={() => navigate("/dashboard/products")}
               >
                 <ArrowLeftIcon className="h-4 w-4" />
-                Quay lại
+                Go Back
               </Button>
             </div>
           </CardBody>
@@ -662,10 +722,10 @@ const UpdateProduct = () => {
               <CardBody className="p-8">
                 <Typography variant="h4" color="blue-gray" className="mb-2 flex items-center gap-2">
                   <PencilIcon className="h-6 w-6 text-blue-500" />
-                  Thông tin sản phẩm
+                  Product Information
                 </Typography>
                 <Typography color="gray" className="mb-8">
-                  Cập nhật thông tin sản phẩm bên dưới
+                  Update product information below
                 </Typography>
 
                 {message && (
@@ -684,14 +744,14 @@ const UpdateProduct = () => {
                   <div>
                     <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
                       <CubeIcon className="h-5 w-5" />
-                      Tên sản phẩm
+                      Product Name
                     </Typography>
                     <Input
-                      label="Tên sản phẩm"
+                      label="Product Name"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      placeholder="Nhập tên sản phẩm..."
+                      placeholder="Enter product name..."
                       required
                       className="!border !border-gray-300 focus:!border-blue-500"
                     />
@@ -701,14 +761,14 @@ const UpdateProduct = () => {
                   <div>
                     <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
                       <CubeIcon className="h-5 w-5" />
-                      Mô tả sản phẩm
+                      Product Description
                     </Typography>
                     <Textarea
-                      label="Mô tả"
+                      label="Description"
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
-                      placeholder="Mô tả chi tiết về sản phẩm..."
+                      placeholder="Detailed description of the product..."
                       required
                       className="!border !border-gray-300 focus:!border-blue-500 min-h-[120px]"
                     />
@@ -719,11 +779,11 @@ const UpdateProduct = () => {
                     <div>
                       <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
                         <CurrencyDollarIcon className="h-5 w-5" />
-                        Giá bán (VND)
+                        Price (VND)
                       </Typography>
                       <Input
                         type="number"
-                        label="Giá sản phẩm"
+                        label="Product Price"
                         name="price"
                         value={formData.price}
                         onChange={handleChange}
@@ -737,11 +797,11 @@ const UpdateProduct = () => {
                     <div>
                       <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
                         <HashtagIcon className="h-5 w-5" />
-                        Số lượng
+                        Quantity
                       </Typography>
                       <Input
                         type="number"
-                        label="Số lượng"
+                        label="Quantity"
                         name="quantity"
                         value={formData.quantity}
                         onChange={handleChange}
@@ -750,6 +810,17 @@ const UpdateProduct = () => {
                         required
                         className="!border !border-gray-300 focus:!border-blue-500"
                       />
+                      {/* Display stock status */}
+                      {formData.quantity !== "" && (
+                        <div className={`mt-2 text-sm font-medium ${stockStatus.color === 'green' ? 'text-green-600' : 'text-red-600'}`}>
+                          Stock Status: {stockStatus.text}
+                          {Number(formData.quantity) <= 0 && formData.active && (
+                            <span className="text-amber-600 block text-xs mt-1">
+                              ⚠️ Product is out of stock but still set to "Active"
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -757,7 +828,7 @@ const UpdateProduct = () => {
                   <div>
                     <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
                       <PhotoIcon className="h-5 w-5" />
-                      Hình ảnh chính
+                      Main Image
                     </Typography>
                     
                     {!mainImagePreview ? (
@@ -772,13 +843,13 @@ const UpdateProduct = () => {
                           />
                           <CloudArrowUpIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <Typography variant="h6" color="gray" className="mb-2">
-                            Click để upload ảnh mới
+                            Click to upload new image
                           </Typography>
                           <Typography variant="small" color="gray">
-                            JPEG, PNG, WEBP (Tối đa 5MB)
+                            JPEG, PNG, WEBP (Max 5MB)
                           </Typography>
                           <Typography variant="small" color="blue" className="mt-2">
-                            Hoặc nhập URL bên dưới
+                            Or enter URL below
                           </Typography>
                         </label>
                       </div>
@@ -788,11 +859,11 @@ const UpdateProduct = () => {
                           <div className="flex items-center justify-between mb-4">
                             <Typography variant="small" color="green" className="flex items-center gap-1">
                               <PhotoIcon className="h-4 w-4" />
-                              {mainImageFile ? "Ảnh mới đã chọn" : "Ảnh hiện tại"}
+                              {mainImageFile ? "New image selected" : "Current image"}
                               {imageUploaded && (
                                 <span className="text-blue-500 ml-2 flex items-center gap-1">
                                   <CheckBadgeIcon className="h-4 w-4" />
-                                  Đã upload lên server
+                                  Uploaded to server
                                 </span>
                               )}
                             </Typography>
@@ -807,7 +878,7 @@ const UpdateProduct = () => {
                                   disabled={uploadingImage}
                                 >
                                   <CloudArrowUpIcon className="h-4 w-4" />
-                                  {uploadingImage ? 'Đang upload...' : 'Upload lên server'}
+                                  {uploadingImage ? 'Uploading...' : 'Upload to server'}
                                 </Button>
                               )}
                               <Button
@@ -819,7 +890,7 @@ const UpdateProduct = () => {
                                 disabled={uploadingImage}
                               >
                                 <TrashIcon className="h-4 w-4" />
-                                Xóa
+                                Remove
                               </Button>
                             </div>
                           </div>
@@ -843,7 +914,7 @@ const UpdateProduct = () => {
                             </div>
                             <div>
                               <Typography variant="small" className="font-medium">
-                                {mainImageFile?.name || "Ảnh từ URL"}
+                                {mainImageFile?.name || "Image from URL"}
                               </Typography>
                               {mainImageFile && (
                                 <Typography variant="small" color="gray">
@@ -864,10 +935,10 @@ const UpdateProduct = () => {
                                 <div className="mt-2">
                                   <Typography variant="small" color="amber" className="font-medium flex items-center gap-1">
                                     <ExclamationCircleIcon className="h-4 w-4" />
-                                    ⚠️ Chưa upload lên server
+                                    ⚠️ Not uploaded to server
                                   </Typography>
                                   <Typography variant="small" color="gray">
-                                    Nhấn "Upload lên server" trước khi cập nhật
+                                    Click "Upload to server" before updating
                                   </Typography>
                                 </div>
                               )}
@@ -877,13 +948,13 @@ const UpdateProduct = () => {
                       </div>
                     )}
                     
-                    {/* Input URL (fallback) */}
+                    {/* URL Input (fallback) */}
                     <div className="mt-4">
                       <Typography variant="small" color="gray" className="mb-2">
-                        Hoặc nhập URL ảnh:
+                        Or enter image URL:
                       </Typography>
                       <Input
-                        label="URL hình ảnh chính"
+                        label="Main Image URL"
                         name="mainImageUrl"
                         value={formData.mainImageUrl}
                         onChange={handleChange}
@@ -893,16 +964,16 @@ const UpdateProduct = () => {
                     </div>
                     
                     <Typography variant="small" color="gray" className="mt-2">
-                      Ảnh này sẽ hiển thị ở trang danh sách và là ảnh đại diện
+                      This image will be displayed on the product list and as the featured image
                     </Typography>
                   </div>
 
-                  {/* Categories - ĐÃ CẬP NHẬT HIỂN THỊ PHÂN CẤP */}
+                  {/* Categories - UPDATED WITH HIERARCHICAL DISPLAY */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <Typography variant="h6" color="blue-gray" className="flex items-center gap-2">
                         <FolderIcon className="h-5 w-5" />
-                        Danh mục
+                        Categories
                       </Typography>
                       <Button
                         size="sm"
@@ -912,14 +983,14 @@ const UpdateProduct = () => {
                         onClick={() => setCategoryDialog(true)}
                       >
                         <PlusIcon className="h-4 w-4" />
-                        Thêm danh mục
+                        Add Category
                       </Button>
                     </div>
 
                     {fetchingCategories ? (
                       <div className="flex items-center gap-2 text-gray-500">
                         <Spinner className="h-4 w-4" />
-                        <Typography variant="small">Đang tải danh mục...</Typography>
+                        <Typography variant="small">Loading categories...</Typography>
                       </div>
                     ) : (
                       <>
@@ -946,18 +1017,18 @@ const UpdateProduct = () => {
                             >
                               {cat.level > 0 && '└─ '}
                               {cat.name}
-                              {cat.level === 0 && ' (Danh mục cha)'}
+                              {cat.level === 0 && ' (Parent Category)'}
                             </option>
                           ))}
                         </select>
                         <Typography variant="small" color="gray" className="mt-1">
-                          Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều danh mục
+                          Hold Ctrl (Windows) or Cmd (Mac) to select multiple categories
                         </Typography>
 
                         {selectedCategories.length > 0 && (
                           <div className="mt-3">
                             <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                              Đã chọn ({selectedCategories.length}):
+                              Selected ({selectedCategories.length}):
                             </Typography>
                             <div className="flex flex-wrap gap-2">
                               {selectedCategories.map((cat) => (
@@ -1001,14 +1072,14 @@ const UpdateProduct = () => {
                         onClick={() => setTagDialog(true)}
                       >
                         <PlusIcon className="h-4 w-4" />
-                        Thêm tag
+                        Add Tag
                       </Button>
                     </div>
 
                     {fetchingTags ? (
                       <div className="flex items-center gap-2 text-gray-500">
                         <Spinner className="h-4 w-4" />
-                        <Typography variant="small">Đang tải tags...</Typography>
+                        <Typography variant="small">Loading tags...</Typography>
                       </div>
                     ) : (
                       <>
@@ -1025,13 +1096,13 @@ const UpdateProduct = () => {
                           ))}
                         </select>
                         <Typography variant="small" color="gray" className="mt-1">
-                          Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều tags
+                          Hold Ctrl (Windows) or Cmd (Mac) to select multiple tags
                         </Typography>
 
                         {selectedTags.length > 0 && (
                           <div className="mt-3">
                             <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                              Đã chọn ({selectedTags.length}):
+                              Selected ({selectedTags.length}):
                             </Typography>
                             <div className="flex flex-wrap gap-2">
                               {selectedTags.map((tag) => (
@@ -1060,7 +1131,7 @@ const UpdateProduct = () => {
                     )}
                   </div>
 
-                  {/* Active Checkbox */}
+                  {/* Active Checkbox with stock warning */}
                   <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
                     <Checkbox
                       name="active"
@@ -1072,11 +1143,28 @@ const UpdateProduct = () => {
                     <div>
                       <Typography variant="h6" color="blue-gray" className="flex items-center gap-2">
                         <CheckBadgeIcon className="h-5 w-5 text-green-500" />
-                        Trạng thái hoạt động
+                        Active Status
+                        {Number(formData.quantity) <= 0 && formData.active && (
+                          <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
+                            ⚠️ Out of Stock
+                          </span>
+                        )}
                       </Typography>
                       <Typography variant="small" color="gray">
-                        Sản phẩm sẽ được hiển thị trên cửa hàng
+                        {formData.active 
+                          ? "Product will be displayed in the store" 
+                          : "Product will NOT be displayed in the store"}
                       </Typography>
+                      {Number(formData.quantity) <= 0 && formData.active && (
+                        <Typography variant="small" color="red" className="mt-1">
+                          ⚠️ Product is out of stock but still displayed in the store
+                        </Typography>
+                      )}
+                      {Number(formData.quantity) > 0 && !formData.active && (
+                        <Typography variant="small" color="amber" className="mt-1">
+                          ℹ️ Product is in stock but not displayed in the store
+                        </Typography>
+                      )}
                     </div>
                   </div>
 
@@ -1089,7 +1177,7 @@ const UpdateProduct = () => {
                       onClick={() => navigate("/dashboard/products")}
                       disabled={loading || uploadingImage}
                     >
-                      Hủy bỏ
+                      Cancel
                     </Button>
                     <Button
                       type="submit"
@@ -1100,12 +1188,12 @@ const UpdateProduct = () => {
                       {loading ? (
                         <>
                           <Spinner className="h-4 w-4" />
-                          Đang cập nhật...
+                          Updating...
                         </>
                       ) : (
                         <>
                           <PencilIcon className="h-4 w-4" />
-                          Cập nhật sản phẩm
+                          Update Product
                         </>
                       )}
                     </Button>
@@ -1115,13 +1203,13 @@ const UpdateProduct = () => {
             </Card>
           </div>
 
-          {/* Preview Sidebar */}
+          {/* Preview Sidebar - Updated with stock status */}
           <div className="lg:col-span-1">
             <Card className="shadow-xl border-0 sticky top-6">
               <CardBody className="p-6">
                 <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
                   <PhotoIcon className="h-5 w-5" />
-                  Xem trước
+                  Preview
                 </Typography>
 
                 <div className="space-y-4">
@@ -1132,7 +1220,7 @@ const UpdateProduct = () => {
                         alt="Product preview"
                         className="w-full h-48 object-cover rounded-lg shadow-md"
                         onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/300x200?text=Ảnh+lỗi";
+                          e.target.src = "https://via.placeholder.com/300x200?text=Image+Error";
                         }}
                       />
                       {uploadingImage && (
@@ -1158,7 +1246,7 @@ const UpdateProduct = () => {
                         {formData.name}
                       </Typography>
                       <Typography variant="small" color="gray" className="mt-1 line-clamp-3">
-                        {formData.description || "Chưa có mô tả"}
+                        {formData.description || "No description"}
                       </Typography>
                     </div>
                   )}
@@ -1172,7 +1260,7 @@ const UpdateProduct = () => {
                   {selectedCategories.length > 0 && (
                     <div>
                       <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                        Danh mục:
+                        Categories:
                       </Typography>
                       <div className="flex flex-wrap gap-1">
                         {selectedCategories.map((cat) => (
@@ -1212,7 +1300,7 @@ const UpdateProduct = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="bg-blue-50 p-3 rounded-lg text-center">
                       <Typography variant="small" color="blue-gray" className="font-medium">
-                        Số lượng
+                        Quantity
                       </Typography>
                       <Typography variant="h6" color="blue" className="font-bold">
                         {formData.quantity || 0}
@@ -1222,22 +1310,42 @@ const UpdateProduct = () => {
                       formData.active ? 'bg-green-50' : 'bg-red-50'
                     }`}>
                       <Typography variant="small" color="blue-gray" className="font-medium">
-                        Trạng thái
+                        Status
                       </Typography>
                       <Typography 
                         variant="h6" 
                         className={`font-bold ${formData.active ? 'text-green-600' : 'text-red-600'}`}
                       >
-                        {formData.active ? 'Đang bán' : 'Ngừng bán'}
+                        {formData.active ? 'Active' : 'Inactive'}
                       </Typography>
                     </div>
+                  </div>
+
+                  {/* Display stock status in preview */}
+                  <div className={`p-3 rounded-lg text-center ${
+                    stockStatus.color === 'green' ? 'bg-green-50' : 'bg-red-50'
+                  }`}>
+                    <Typography variant="small" color="blue-gray" className="font-medium">
+                      Stock
+                    </Typography>
+                    <Typography 
+                      variant="h6" 
+                      className={`font-bold ${stockStatus.color === 'green' ? 'text-green-600' : 'text-red-600'}`}
+                    >
+                      {stockStatus.text}
+                    </Typography>
+                    {Number(formData.quantity) <= 0 && formData.active && (
+                      <Typography variant="small" color="red" className="mt-1">
+                        ⚠️ Product out of stock
+                      </Typography>
+                    )}
                   </div>
 
                   {!formData.name && (
                     <div className="text-center py-8">
                       <CubeIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                       <Typography color="gray" className="text-sm">
-                        Thông tin sản phẩm sẽ xuất hiện ở đây
+                        Product information will appear here
                       </Typography>
                     </div>
                   )}
@@ -1253,20 +1361,20 @@ const UpdateProduct = () => {
         <DialogHeader className="flex items-center gap-3">
           <PlusIcon className="h-5 w-5 text-blue-500" />
           <Typography variant="h5" color="blue-gray">
-            Thêm danh mục mới
+            Add New Category
           </Typography>
         </DialogHeader>
         <DialogBody>
           <div className="space-y-4">
             <Input
-              label="Tên danh mục"
+              label="Category Name"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="Nhập tên danh mục mới..."
+              placeholder="Enter new category name..."
               className="!border !border-gray-300 focus:!border-blue-500"
             />
             <Typography variant="small" color="gray">
-              Danh mục mới sẽ được thêm vào danh sách và tự động chọn cho sản phẩm này.
+              The new category will be added to the list and automatically selected for this product.
             </Typography>
           </div>
         </DialogBody>
@@ -1279,7 +1387,7 @@ const UpdateProduct = () => {
               setNewCategoryName("");
             }}
           >
-            Hủy bỏ
+            Cancel
           </Button>
           <Button
             onClick={handleCreateCategory}
@@ -1291,7 +1399,7 @@ const UpdateProduct = () => {
             ) : (
               <PlusIcon className="h-4 w-4" />
             )}
-            {creatingCategory ? "Đang tạo..." : "Tạo danh mục"}
+            {creatingCategory ? "Creating..." : "Create Category"}
           </Button>
         </DialogFooter>
       </Dialog>
@@ -1301,20 +1409,20 @@ const UpdateProduct = () => {
         <DialogHeader className="flex items-center gap-3">
           <PlusIcon className="h-5 w-5 text-green-500" />
           <Typography variant="h5" color="blue-gray">
-            Thêm tag mới
+            Add New Tag
           </Typography>
         </DialogHeader>
         <DialogBody>
           <div className="space-y-4">
             <Input
-              label="Tên tag"
+              label="Tag Name"
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
-              placeholder="Nhập tên tag mới..."
+              placeholder="Enter new tag name..."
               className="!border !border-gray-300 focus:!border-green-500"
             />
             <Typography variant="small" color="gray">
-              Tag mới sẽ được thêm vào danh sách và tự động chọn cho sản phẩm này.
+              The new tag will be added to the list and automatically selected for this product.
             </Typography>
           </div>
         </DialogBody>
@@ -1327,7 +1435,7 @@ const UpdateProduct = () => {
               setNewTagName("");
             }}
           >
-            Hủy bỏ
+            Cancel
           </Button>
           <Button
             onClick={handleCreateTag}
@@ -1340,7 +1448,7 @@ const UpdateProduct = () => {
             ) : (
               <PlusIcon className="h-4 w-4" />
             )}
-            {creatingTag ? "Đang tạo..." : "Tạo tag"}
+            {creatingTag ? "Creating..." : "Create Tag"}
           </Button>
         </DialogFooter>
       </Dialog>

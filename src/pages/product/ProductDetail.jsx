@@ -59,7 +59,7 @@ export function ProductDetail() {
       try {
         setLoading(true);
         const data = await ProductService.getProductDetails(id);
-        console.log("📦 Dữ liệu sản phẩm chi tiết:", data);
+        console.log("📦 Product detail data:", data);
         setProduct(data);
       } catch (err) {
         setError(err.message);
@@ -71,7 +71,7 @@ export function ProductDetail() {
     fetchProduct();
   }, [id]);
 
-  // 🔄 Hàm làm phẳng cấu trúc danh mục để đếm tổng số
+  // 🔄 Function to flatten category structure to count total
   const flattenCategories = (categories) => {
     let count = 0;
     
@@ -88,32 +88,32 @@ export function ProductDetail() {
     return count;
   };
 
-  // 🔄 Hàm đệ quy để hiển thị danh mục phân cấp
+  // 🔄 Recursive function to display hierarchical categories
   const renderCategoryTree = (categories, level = 0) => {
     return categories.map((category, index) => {
       const categoryName = category.name || category.categoryName || 
-                         category.title || `Danh mục ${category.id}`;
+                         category.title || `Category ${category.id}`;
       const hasChildren = category.children && category.children.length > 0;
       
       return (
         <div key={category.id || index} className="ml-4">
-          {/* Danh mục cha */}
+          {/* Parent Category */}
           <div className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors ${
             level === 0 ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
           }`}>
             <div className="flex items-center gap-2 flex-1">
-              {/* Ký tự phân cấp */}
+              {/* Hierarchy character */}
               <div className="text-gray-400 text-sm w-4">
                 {level > 0 && '└─'}
               </div>
               
-              {/* Icon danh mục */}
+              {/* Category icon */}
               <FolderIcon className={`h-4 w-4 ${
                 level === 0 ? 'text-blue-500' : 
                 level === 1 ? 'text-green-500' : 'text-orange-500'
               }`} />
               
-              {/* Tên danh mục */}
+              {/* Category name */}
               <Typography 
                 variant="small" 
                 className={`font-medium ${
@@ -124,10 +124,10 @@ export function ProductDetail() {
                 {categoryName}
               </Typography>
               
-              {/* Badge cho danh mục cha */}
+              {/* Badge for parent category */}
               {level === 0 && (
                 <Chip
-                  value="Danh mục cha"
+                  value="Parent Category"
                   size="sm"
                   color="blue"
                   variant="outlined"
@@ -136,13 +136,13 @@ export function ProductDetail() {
               )}
             </div>
             
-            {/* ID danh mục */}
+            {/* Category ID */}
             <Typography variant="small" color="gray" className="font-mono">
               #{category.id}
             </Typography>
           </div>
 
-          {/* Danh mục con */}
+          {/* Child Categories */}
           {hasChildren && (
             <div className="mt-1 border-l-2 border-gray-200 ml-2 pl-2">
               {renderCategoryTree(category.children, level + 1)}
@@ -153,7 +153,7 @@ export function ProductDetail() {
     });
   };
 
-  // Hàm hiển thị categories với cấu trúc phân cấp
+  // Function to display categories with hierarchical structure
   const renderCategories = () => {
     const categories = product.categories || product.categoryList || [];
     
@@ -162,25 +162,25 @@ export function ProductDetail() {
         <div className="text-center py-6">
           <FolderIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
           <Typography variant="small" color="gray" className="italic">
-            Sản phẩm chưa được phân loại danh mục
+            Product not categorized
           </Typography>
         </div>
       );
     }
 
-    // Kiểm tra xem có danh mục con không
+    // Check if has child categories
     const hasChildCategories = categories.some(cat => 
       cat.children && cat.children.length > 0
     );
 
     if (!hasChildCategories) {
-      // Hiển thị dạng phẳng nếu không có danh mục con
+      // Display flat view if no child categories
       return (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {categories.map((category, index) => {
               const categoryName = category.name || category.categoryName || 
-                                 category.title || `Danh mục ${index + 1}`;
+                                 category.title || `Category ${index + 1}`;
               
               return (
                 <Tooltip key={category.id || category.categoryId || index} content={`ID: ${category.id}`}>
@@ -197,7 +197,7 @@ export function ProductDetail() {
           </div>
           <div className="flex justify-between items-center px-2">
             <Typography variant="small" color="blue-gray" className="font-semibold">
-              Tổng số: {categories.length} danh mục
+              Total: {categories.length} categories
             </Typography>
             <Badge color="blue" content={categories.length} />
           </div>
@@ -205,15 +205,15 @@ export function ProductDetail() {
       );
     }
 
-    // Hiển thị dạng cây phân cấp
+    // Display hierarchical tree view
     const totalCategories = flattenCategories(categories);
 
     return (
       <div className="space-y-4">
-        {/* Accordion cho từng danh mục cha */}
+        {/* Accordion for each parent category */}
         {categories.map((category, index) => {
           const categoryName = category.name || category.categoryName || 
-                             category.title || `Danh mục ${category.id}`;
+                             category.title || `Category ${category.id}`;
           const hasChildren = category.children && category.children.length > 0;
           const childCount = hasChildren ? category.children.length : 0;
 
@@ -236,7 +236,7 @@ export function ProductDetail() {
                       {categoryName}
                     </Typography>
                     <Typography variant="small" color="gray">
-                      ID: {category.id} {hasChildren && `• ${childCount} danh mục con`}
+                      ID: {category.id} {hasChildren && `• ${childCount} subcategories`}
                     </Typography>
                   </div>
                   {hasChildren && (
@@ -256,7 +256,7 @@ export function ProductDetail() {
                         <div className="flex items-center gap-2">
                           <FolderIcon className="h-4 w-4 text-green-500" />
                           <Typography variant="small" className="font-medium text-green-700">
-                            {child.name || child.categoryName || `Danh mục con ${childIndex + 1}`}
+                            {child.name || child.categoryName || `Subcategory ${childIndex + 1}`}
                           </Typography>
                         </div>
                         <Typography variant="small" color="gray" className="font-mono">
@@ -267,7 +267,7 @@ export function ProductDetail() {
                   </div>
                 ) : (
                   <Typography variant="small" color="gray" className="italic text-center py-2">
-                    Không có danh mục con
+                    No subcategories
                   </Typography>
                 )}
               </AccordionBody>
@@ -275,34 +275,34 @@ export function ProductDetail() {
           );
         })}
 
-        {/* Thống kê tổng số danh mục */}
+        {/* Total category statistics */}
         <div className="flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
           <div className="flex items-center gap-2">
             <ChartBarIcon className="h-4 w-4 text-blue-500" />
             <Typography variant="small" color="blue-gray" className="font-semibold">
-              Tổng số danh mục
+              Total categories
             </Typography>
           </div>
           <div className="flex gap-2">
             <Badge color="blue" content={categories.length} />
             <Typography variant="small" color="gray" className="font-semibold">
-              danh mục cha
+              parent categories
             </Typography>
             <Typography variant="small" color="gray" className="mx-1">
               +
             </Typography>
             <Badge color="green" content={totalCategories - categories.length} />
             <Typography variant="small" color="gray" className="font-semibold">
-              danh mục con
+              subcategories
             </Typography>
           </div>
         </div>
 
-        {/* Hiển thị dạng cây đơn giản */}
+        {/* Simple tree view display */}
         <div className="mt-4">
           <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
             <CubeIcon className="h-4 w-4 text-blue-500" />
-            Cấu trúc danh mục
+            Category structure
           </Typography>
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 max-h-60 overflow-y-auto">
             {renderCategoryTree(categories)}
@@ -312,7 +312,7 @@ export function ProductDetail() {
     );
   };
 
-  // Hàm hiển thị tags
+  // Function to display tags
   const renderTags = () => {
     const tags = product.tagIds || [];
     
@@ -321,48 +321,48 @@ export function ProductDetail() {
         <div className="text-center py-6">
           <TagIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
           <Typography variant="small" color="gray" className="italic">
-            Sản phẩm chưa được gắn tag
+            Product has no tags
           </Typography>
         </div>
       );
     }
 
     return (
-       <div className="space-y-4">
-      {/* Danh sách tags dạng chips */}
-      <div className="flex flex-wrap gap-2">
-        {tags.map((tag, index) => (
-          <Tooltip key={tag.id || index} content={`ID: ${tag.id}`}>
-            <Chip
-              value={tag.name} // chỉ dùng tag.name
-              color="green"
-              variant="gradient"
-              className="rounded-full font-medium transition-all hover:scale-105 cursor-pointer"
-              icon={<TagIcon className="h-3 w-3" />}
-            />
-          </Tooltip>
-        ))}
-      </div>
+      <div className="space-y-4">
+        {/* Tags list as chips */}
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag, index) => (
+            <Tooltip key={tag.id || index} content={`ID: ${tag.id}`}>
+              <Chip
+                value={tag.name} // only use tag.name
+                color="green"
+                variant="gradient"
+                className="rounded-full font-medium transition-all hover:scale-105 cursor-pointer"
+                icon={<TagIcon className="h-3 w-3" />}
+              />
+            </Tooltip>
+          ))}
+        </div>
 
-        {/* Thống kê tags */}
+        {/* Tags statistics */}
         <div className="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
           <div className="flex items-center gap-2">
             <TagIcon className="h-4 w-4 text-green-500" />
             <Typography variant="small" color="blue-gray" className="font-semibold">
-              Tổng số tags
+              Total tags
             </Typography>
           </div>
           <Badge color="green" content={tags.length} />
         </div>
 
-        {/* Chi tiết từng tag */}
+        {/* Detailed tag info */}
         <div className="space-y-2">
           <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
-            Chi tiết tags:
+            Tag details:
           </Typography>
           {tags.map((tag, index) => {
             const tagName = tag.name || tag.tagName || `Tag ${index + 1}`;
-            // const tagDescription = tag.description || "Không có mô tả";
+            // const tagDescription = tag.description || "No description";
             
             return (
               <div 
@@ -412,10 +412,10 @@ export function ProductDetail() {
             <CubeIcon className="h-8 w-8 text-blue-700 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
           </div>
           <Typography variant="h4" color="blue-gray" className="mb-3 font-bold">
-            Đang tải thông tin sản phẩm
+            Loading product information
           </Typography>
           <Typography variant="paragraph" color="gray" className="max-w-md">
-            Đang lấy dữ liệu chi tiết sản phẩm từ hệ thống...
+            Fetching detailed product data from system...
           </Typography>
         </div>
       </div>
@@ -432,7 +432,7 @@ export function ProductDetail() {
               <div className="absolute inset-0 bg-red-100 rounded-full blur-lg opacity-30"></div>
             </div>
             <Typography variant="h4" color="red" className="mb-3 font-bold">
-              Đã xảy ra lỗi
+              Error occurred
             </Typography>
             <Typography color="gray" className="mb-6 leading-relaxed">
               {error}
@@ -445,7 +445,7 @@ export function ProductDetail() {
                 className="flex items-center gap-2"
               >
                 <ArrowLeftIcon className="h-4 w-4" />
-                Quay lại
+                Go back
               </Button>
               <Button 
                 color="blue"
@@ -453,7 +453,7 @@ export function ProductDetail() {
                 className="flex items-center gap-2"
               >
                 <EyeIcon className="h-4 w-4" />
-                Thử lại
+                Try again
               </Button>
             </div>
           </CardBody>
@@ -472,10 +472,10 @@ export function ProductDetail() {
               <div className="absolute inset-0 bg-amber-100 rounded-full blur-lg opacity-30"></div>
             </div>
             <Typography variant="h4" color="amber" className="mb-3 font-bold">
-              Không tìm thấy sản phẩm
+              Product not found
             </Typography>
             <Typography color="gray" className="mb-6 leading-relaxed">
-              Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
+              The product you are looking for does not exist or has been deleted.
             </Typography>
             <Button 
               color="blue"
@@ -483,7 +483,7 @@ export function ProductDetail() {
               className="flex items-center gap-2 mx-auto"
             >
               <ArrowLeftIcon className="h-4 w-4" />
-              Quay lại danh sách
+              Back to list
             </Button>
           </CardBody>
         </Card>
@@ -501,7 +501,7 @@ export function ProductDetail() {
   const getStockStatus = (quantity) => {
     if (quantity === 0) {
       return { 
-        text: "HẾT HÀNG", 
+        text: "OUT OF STOCK", 
         color: "red", 
         bgColor: "from-red-50 to-red-100",
         textColor: "text-red-700",
@@ -511,7 +511,7 @@ export function ProductDetail() {
     } else if (quantity <= 10) {
       const progress = (quantity / 10) * 100;
       return { 
-        text: "SẮP HẾT", 
+        text: "LOW STOCK", 
         color: "orange", 
         bgColor: "from-orange-50 to-orange-100",
         textColor: "text-orange-700",
@@ -521,7 +521,7 @@ export function ProductDetail() {
     } else {
       const progress = Math.min((quantity / 100) * 100, 100);
       return { 
-        text: "CÒN HÀNG", 
+        text: "IN STOCK", 
         color: "green", 
         bgColor: "from-green-50 to-green-100",
         textColor: "text-green-700",
@@ -555,14 +555,14 @@ export function ProductDetail() {
                 </div>
                 <div>
                   <Typography variant="h1" className="text-white font-bold mb-2 text-3xl">
-                    Chi tiết Sản Phẩm
+                    Product Details
                   </Typography>
                   <Breadcrumbs className="bg-transparent p-0">
                     <Link to="/dashboard" className="opacity-80 text-blue-100 hover:text-white transition-colors">
                       Dashboard
                     </Link>
                     <Link to="/dashboard/products" className="opacity-80 text-blue-100 hover:text-white transition-colors">
-                      Sản phẩm
+                      Products
                     </Link>
                     <Typography className="text-white font-semibold">#{product.id}</Typography>
                   </Breadcrumbs>
@@ -575,7 +575,7 @@ export function ProductDetail() {
                     variant="outlined"
                   >
                     <PencilIcon className="h-4 w-4" />
-                    Chỉnh sửa
+                    Edit
                   </Button>
                 </Link>
                 <Button
@@ -585,7 +585,7 @@ export function ProductDetail() {
                   onClick={() => navigate("/dashboard/products")}
                 >
                   <ArrowLeftIcon className="h-4 w-4" />
-                  Quay lại
+                  Go back
                 </Button>
               </div>
             </div>
@@ -625,7 +625,7 @@ export function ProductDetail() {
                         <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex flex-col items-center justify-center">
                           <PhotoIcon className="h-16 w-16 text-gray-400 mb-4" />
                           <Typography variant="small" color="gray" className="text-center">
-                            Không có hình ảnh
+                            No image available
                           </Typography>
                         </div>
                       )}
@@ -638,7 +638,7 @@ export function ProductDetail() {
                         </Typography>
                         <div className="flex flex-wrap gap-2">
                           <Chip
-                            value={product.active ? "ĐANG BÁN" : "NGỪNG BÁN"}
+                            value={product.active ? "ACTIVE" : "INACTIVE"}
                             color={product.active ? "green" : "red"}
                             variant="gradient"
                             className="rounded-full font-bold text-xs"
@@ -672,7 +672,7 @@ export function ProductDetail() {
                         </div>
                         <div className="flex-1">
                           <Typography variant="small" color="blue-gray" className="font-medium">
-                            Tồn kho
+                            Stock
                           </Typography>
                           <Typography variant="h4" color="blue" className="font-bold">
                             {product.quantity || 0}
@@ -697,13 +697,13 @@ export function ProductDetail() {
                         </div>
                         <div>
                           <Typography variant="small" color="blue-gray" className="font-medium">
-                            Đã bán
+                            Sold
                           </Typography>
                           <Typography variant="h4" color="purple" className="font-bold">
                             {product.soldQuantity || 0}
                           </Typography>
                           <Typography variant="small" color="purple" className="font-semibold">
-                            {soldPercentage}% tổng số
+                            {soldPercentage}% of total
                           </Typography>
                         </div>
                       </div>
@@ -718,13 +718,13 @@ export function ProductDetail() {
                         </div>
                         <div>
                           <Typography variant="small" color="blue-gray" className="font-medium">
-                            Trạng thái
+                            Status
                           </Typography>
                           <Typography variant="h6" className={`font-bold ${stockStatus.textColor}`}>
                             {stockStatus.text}
                           </Typography>
                           <Typography variant="small" color="gray">
-                            {product.active ? "Đang kinh doanh" : "Tạm ngừng"}
+                            {product.active ? "Active" : "Paused"}
                           </Typography>
                         </div>
                       </div>
@@ -737,18 +737,18 @@ export function ProductDetail() {
                   <CardBody className="p-6">
                     <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
                       <FolderIcon className="h-5 w-5 text-blue-500" />
-                      Danh mục sản phẩm
+                      Product Categories
                     </Typography>
                     {renderCategories()}
                   </CardBody>
                 </Card>
 
-                {/* Tags - PHẦN MỚI THÊM */}
+                {/* Tags - NEWLY ADDED SECTION */}
                 <Card className="shadow-xl border-0">
                   <CardBody className="p-6">
                     <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
                       <TagIcon className="h-5 w-5 text-green-500" />
-                      Tags sản phẩm
+                      Product Tags
                     </Typography>
                     {renderTags()}
                   </CardBody>
@@ -759,11 +759,11 @@ export function ProductDetail() {
                   <CardBody className="p-6">
                     <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
                       <TagIcon className="h-5 w-5 text-blue-500" />
-                      Mô tả sản phẩm
+                      Product Description
                     </Typography>
                     <div className="bg-gray-50 rounded-lg p-4">
                       <Typography variant="paragraph" color="gray" className="leading-relaxed">
-                        {product.description || "Chưa có mô tả cho sản phẩm này."}
+                        {product.description || "No description for this product."}
                       </Typography>
                     </div>
                   </CardBody>
@@ -779,18 +779,18 @@ export function ProductDetail() {
               <CardBody className="p-6 relative">
                 <Typography variant="h5" color="blue-gray" className="mb-6 flex items-center gap-2">
                   <CalendarDaysIcon className="h-5 w-5 text-blue-500" />
-                  Thông tin hệ thống
+                  System Information
                 </Typography>
 
                 <div className="space-y-4">
                   {[
-                    { icon: ClockIcon, label: "Trạng thái", value: product.active ? "Đang bán" : "Ngừng bán", color: product.active ? "green" : "red" },
-                    { icon: HashtagIcon, label: "ID sản phẩm", value: `#${product.id}`, color: "blue" },
-                    { icon: ArchiveBoxIcon, label: "Tồn kho", value: product.quantity || 0, color: "blue" },
-                    { icon: FolderIcon, label: "Danh mục", value: getCategoriesCount(), color: "purple" },
+                    { icon: ClockIcon, label: "Status", value: product.active ? "Active" : "Inactive", color: product.active ? "green" : "red" },
+                    { icon: HashtagIcon, label: "Product ID", value: `#${product.id}`, color: "blue" },
+                    { icon: ArchiveBoxIcon, label: "Stock", value: product.quantity || 0, color: "blue" },
+                    { icon: FolderIcon, label: "Categories", value: getCategoriesCount(), color: "purple" },
                     { icon: TagIcon, label: "Tags", value: getTagsCount(), color: "green" },
-                    { icon: CalendarDaysIcon, label: "Ngày tạo", value: product.createdAt ? new Date(product.createdAt).toLocaleDateString('vi-VN') : 'N/A', color: "gray" },
-                    { icon: ClockIcon, label: "Cập nhật", value: product.updatedAt ? new Date(product.updatedAt).toLocaleDateString('vi-VN') : 'N/A', color: "gray" },
+                    { icon: CalendarDaysIcon, label: "Created Date", value: product.createdAt ? new Date(product.createdAt).toLocaleDateString('en-US') : 'N/A', color: "gray" },
+                    { icon: ClockIcon, label: "Updated", value: product.updatedAt ? new Date(product.updatedAt).toLocaleDateString('en-US') : 'N/A', color: "gray" },
                   ].map((item, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 hover:border-blue-200 transition-colors">
                       <div className="flex items-center gap-3">
@@ -825,7 +825,7 @@ export function ProductDetail() {
                       size="lg"
                     >
                       <PencilIcon className="h-4 w-4" />
-                      Chỉnh sửa sản phẩm
+                      Edit Product
                     </Button>
                   </Link>
                   
@@ -837,7 +837,7 @@ export function ProductDetail() {
                     size="lg"
                   >
                     <ArrowLeftIcon className="h-4 w-4" />
-                    Quay lại danh sách
+                    Back to list
                   </Button>
                 </div>
               </CardBody>

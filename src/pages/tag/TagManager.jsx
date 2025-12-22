@@ -49,7 +49,7 @@ const TagManager = () => {
       setTags(res.data || []);
     } catch (error) {
       console.error("Error fetching tags:", error);
-      setMessage("Lỗi khi tải danh sách tags");
+      setMessage("Error loading tags list");
       setMessageType("error");
     } finally {
       setLoading(false);
@@ -65,11 +65,11 @@ const TagManager = () => {
     tag.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Tạo tag mới
+  // Create new tag
   const handleCreateTag = async (e) => {
     e.preventDefault();
     if (!newTagName.trim()) {
-      setMessage("Vui lòng nhập tên tag");
+      setMessage("Please enter tag name");
       setMessageType("error");
       return;
     }
@@ -79,20 +79,20 @@ const TagManager = () => {
       const res = await tagService.createTag({ name: newTagName });
       setTags(prev => [...prev, res.data]);
       setNewTagName("");
-      setMessage("🎉 Tạo tag thành công!");
+      setMessage("🎉 Tag created successfully!");
       setMessageType("success");
       
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Error creating tag:", error);
-      setMessage("❌ Tạo tag thất bại");
+      setMessage("❌ Failed to create tag");
       setMessageType("error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Chỉnh sửa tag
+  // Edit tag
   const handleEditTag = (tag) => {
     setEditingTag(tag);
     setNewTagName(tag.name);
@@ -108,32 +108,32 @@ const TagManager = () => {
       setTags(prev => prev.map(t => t.id === editingTag.id ? res.data : t));
       setEditingTag(null);
       setNewTagName("");
-      setMessage("✅ Cập nhật tag thành công!");
+      setMessage("✅ Tag updated successfully!");
       setMessageType("success");
       
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Error updating tag:", error);
-      setMessage("❌ Cập nhật tag thất bại");
+      setMessage("❌ Failed to update tag");
       setMessageType("error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Xóa tag
+  // Delete tag
   const handleDeleteTag = async (id) => {
     try {
       await tagService.deleteTag(id);
       setTags(prev => prev.filter(t => t.id !== id));
       setDeleteDialog({ open: false, tag: null });
-      setMessage("🗑️ Xóa tag thành công!");
+      setMessage("🗑️ Tag deleted successfully!");
       setMessageType("success");
       
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Error deleting tag:", error);
-      setMessage("❌ Xóa tag thất bại");
+      setMessage("❌ Failed to delete tag");
       setMessageType("error");
     }
   };
@@ -146,14 +146,7 @@ const TagManager = () => {
   // Color system for tags
   const getTagColor = (index) => {
     const colors = [
-      // { bg: "bg-gradient-to-r from-blue-500 to-cyan-500", text: "text-white" },
-      // { bg: "bg-gradient-to-r from-emerald-500 to-teal-500", text: "text-white" },
-      // { bg: "bg-gradient-to-r from-purple-500 to-pink-500", text: "text-white" },
-      // { bg: "bg-gradient-to-r from-orange-500 to-red-500", text: "text-white" },
       { bg: "bg-gradient-to-r from-indigo-500 to-blue-500", text: "text-white" },
-      // { bg: "bg-gradient-to-r from-green-500 to-emerald-500", text: "text-white" },
-      // { bg: "bg-gradient-to-r from-pink-500 to-rose-500", text: "text-white" },
-      // { bg: "bg-gradient-to-r from-yellow-500 to-amber-500", text: "text-white" },
     ];
     return colors[index % colors.length];
   };
@@ -167,10 +160,10 @@ const TagManager = () => {
             <TagIcon className="h-8 w-8 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
           </div>
           <Typography variant="h4" className="text-gray-800 font-bold mb-3">
-            Đang tải tags...
+            Loading tags...
           </Typography>
           <Typography variant="paragraph" className="text-gray-600">
-            Đang lấy dữ liệu tags từ hệ thống
+            Fetching tag data from the system
           </Typography>
         </div>
       </div>
@@ -191,10 +184,10 @@ const TagManager = () => {
                 </div>
                 <div>
                   <Typography variant="h1" className="text-white font-bold mb-2 text-3xl">
-                    Quản lý Tags
+                    Tag Manager
                   </Typography>
                   <Typography variant="paragraph" className="text-blue-100 text-lg">
-                    Tạo và quản lý tags cho sản phẩm của bạn
+                    Create and manage tags for your products
                   </Typography>
                 </div>
               </div>
@@ -212,7 +205,7 @@ const TagManager = () => {
                     {filteredTags.length}
                   </Typography>
                   <Typography variant="small" className="text-blue-100">
-                    Đang hiển thị
+                    Displayed
                   </Typography>
                 </div>
               </div>
@@ -231,13 +224,13 @@ const TagManager = () => {
                   ) : (
                     <PlusIcon className="h-6 w-6 text-green-500" />
                   )}
-                  {editingTag ? "Chỉnh sửa Tag" : "Tạo Tag Mới"}
+                  {editingTag ? "Edit Tag" : "Create New Tag"}
                 </Typography>
 
                 <form onSubmit={editingTag ? handleUpdateTag : handleCreateTag} className="space-y-6">
                   <div>
                     <Input
-                      label="Tên tag"
+                      label="Tag name"
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
                       required
@@ -260,7 +253,7 @@ const TagManager = () => {
                       ) : (
                         <PlusIcon className="h-5 w-5" />
                       )}
-                      {editingTag ? "Cập nhật" : "Tạo tag mới"}
+                      {editingTag ? "Update" : "Create New Tag"}
                     </Button>
 
                     {editingTag && (
@@ -272,7 +265,7 @@ const TagManager = () => {
                         className="flex items-center gap-2 py-3 rounded-xl font-bold border-2 hover:bg-red-50 transition-all"
                       >
                         <XMarkIcon className="h-5 w-5" />
-                        Hủy
+                        Cancel
                       </Button>
                     )}
                   </div>
@@ -306,7 +299,7 @@ const TagManager = () => {
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
                   <div className="flex items-center gap-4">
                     <Typography variant="h3" className="font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                      Danh sách Tags
+                      Tag List
                     </Typography>
                     <Badge content={tags.length} color="blue" className="border-2 border-white">
                       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl font-bold">
@@ -317,7 +310,7 @@ const TagManager = () => {
                   
                   <div className="w-full lg:w-64">
                     <Input
-                      label="Tìm kiếm tag..."
+                      label="Search tag..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       icon={<TagIcon className="h-5 w-5 text-gray-500" />}
@@ -336,12 +329,12 @@ const TagManager = () => {
                       )}
                     </div>
                     <Typography variant="h5" color="gray" className="mb-3 font-bold">
-                      {searchTerm ? "Không tìm thấy tag" : "Chưa có tag nào"}
+                      {searchTerm ? "No tags found" : "No tags yet"}
                     </Typography>
                     <Typography color="gray" className="mb-6 leading-relaxed">
                       {searchTerm 
-                        ? `Không tìm thấy tag nào phù hợp với "${searchTerm}"`
-                        : "Hãy tạo tag đầu tiên của bạn"
+                        ? `No tags found matching "${searchTerm}"`
+                        : "Create your first tag"
                       }
                     </Typography>
                     {!searchTerm && (
@@ -352,7 +345,7 @@ const TagManager = () => {
                         onClick={() => document.querySelector('input[type="text"]')?.focus()}
                       >
                         <PlusIcon className="h-5 w-5" />
-                        Tạo tag đầu tiên
+                        Create First Tag
                       </Button>
                     )}
                   </div>
@@ -380,7 +373,7 @@ const TagManager = () => {
                                 </Typography>
                               </div>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <Tooltip content="Chỉnh sửa" placement="top">
+                                <Tooltip content="Edit" placement="top">
                                   <IconButton
                                     variant="gradient"
                                     color="blue"
@@ -391,7 +384,7 @@ const TagManager = () => {
                                     <PencilIcon className="h-4 w-4" />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip content="Xóa" placement="top">
+                                <Tooltip content="Delete" placement="top">
                                   <IconButton
                                     variant="gradient"
                                     color="red"
@@ -413,7 +406,7 @@ const TagManager = () => {
                                 </span>
                               </div>
                               <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600 font-medium">Thứ tự:</span>
+                                <span className="text-gray-600 font-medium">Order:</span>
                                 <span className="font-bold text-gray-800 bg-blue-100 text-blue-800 px-2 py-1 rounded-lg">
                                   #{index + 1}
                                 </span>
@@ -450,17 +443,17 @@ const TagManager = () => {
           </div>
           <div>
             <Typography variant="h4" color="red" className="font-bold">
-              Xác nhận xóa
+              Confirm Delete
             </Typography>
             <Typography variant="small" color="red" className="font-normal">
-              Thao tác này không thể hoàn tác
+              This action cannot be undone
             </Typography>
           </div>
         </DialogHeader>
         <DialogBody className="p-8">
           <div className="text-center">
             <Typography variant="paragraph" color="blue-gray" className="text-lg mb-4">
-              Bạn có chắc chắn muốn xóa tag
+              Are you sure you want to delete the tag
             </Typography>
             <div className="flex justify-center mb-6">
               <Chip
@@ -469,7 +462,7 @@ const TagManager = () => {
               />
             </div>
             <Typography variant="small" color="red" className="mb-6 font-semibold">
-              Tất cả dữ liệu liên quan sẽ bị mất vĩnh viễn
+              All related data will be permanently lost
             </Typography>
           </div>
         </DialogBody>
@@ -480,7 +473,7 @@ const TagManager = () => {
             onClick={() => setDeleteDialog({ open: false, tag: null })}
             className="flex-1 py-3 rounded-xl font-bold border-2 border-gray-300 hover:bg-gray-50 transition-all"
           >
-            Hủy bỏ
+            Cancel
           </Button>
           <Button
             variant="gradient"
@@ -489,7 +482,7 @@ const TagManager = () => {
             className="flex-1 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center justify-center gap-3"
           >
             <TrashIcon className="h-5 w-5" />
-            Xóa tag
+            Delete Tag
           </Button>
         </DialogFooter>
       </Dialog>

@@ -49,13 +49,13 @@ export function ProductCreate() {
     tagIds: [],
   });
 
-  // Thêm state cho upload ảnh
+  // Add state for image upload
   const [mainImageFile, setMainImageFile] = useState(null);
   const [mainImagePreview, setMainImagePreview] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [imageUrl, setImageUrl] = useState(""); // URL ảnh sau khi upload
-  const [imageUploaded, setImageUploaded] = useState(false); // Trạng thái đã upload chưa
-  const [uploadResult, setUploadResult] = useState(null); // Lưu kết quả upload
+  const [imageUrl, setImageUrl] = useState(""); // Image URL after upload
+  const [imageUploaded, setImageUploaded] = useState(false); // Upload status
+  const [uploadResult, setUploadResult] = useState(null); // Save upload result
 
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
@@ -64,7 +64,7 @@ export function ProductCreate() {
   const [formErrors, setFormErrors] = useState({});
   const [isMobile, setIsMobile] = useState(false);
 
-  // Kiểm tra kích thước màn hình
+  // Check screen size
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -76,7 +76,7 @@ export function ProductCreate() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 🔄 Hàm làm phẳng cấu trúc danh mục
+  // 🔄 Function to flatten category structure
   const flattenCategories = (categories, level = 0, parentName = "") => {
     let result = [];
     
@@ -96,7 +96,7 @@ export function ProductCreate() {
     return result;
   };
 
-  // 📦 Load danh sách category với cấu trúc phân cấp
+  // 📦 Load category list with hierarchical structure
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -111,7 +111,7 @@ export function ProductCreate() {
         } else if (Array.isArray(res?.data?.data)) {
           categoriesData = res.data.data;
         } else {
-          console.warn("⚠️ Dữ liệu category không đúng định dạng:", res);
+          console.warn("⚠️ Category data format incorrect:", res);
           categoriesData = [];
         }
 
@@ -122,14 +122,14 @@ export function ProductCreate() {
         
       } catch (err) {
         console.error("❌ Error fetching categories:", err);
-        toast.error("Không thể tải danh mục sản phẩm!");
+        toast.error("Cannot load product categories!");
       }
     };
 
     fetchCategories();
   }, []);
 
-  // 📦 Load danh sách tags
+  // 📦 Load tags list
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -143,14 +143,14 @@ export function ProductCreate() {
         } else if (Array.isArray(res?.data?.data)) {
           tagsData = res.data.data;
         } else {
-          console.warn("⚠️ Dữ liệu tag không đúng định dạng:", res);
+          console.warn("⚠️ Tag data format incorrect:", res);
           tagsData = [];
         }
         
         setTags(tagsData);
       } catch (err) {
         console.error("❌ Error fetching tags:", err);
-        toast.error("Không thể tải tags!");
+        toast.error("Cannot load tags!");
       }
     };
 
@@ -162,34 +162,34 @@ export function ProductCreate() {
     const errors = {};
     
     if (!form.name.trim()) {
-      errors.name = "Tên sản phẩm là bắt buộc";
+      errors.name = "Product name is required";
     }
     
     if (!form.description.trim()) {
-      errors.description = "Mô tả sản phẩm là bắt buộc";
+      errors.description = "Product description is required";
     }
     
     if (!form.price || Number(form.price) <= 0) {
-      errors.price = "Giá sản phẩm phải lớn hơn 0";
+      errors.price = "Product price must be greater than 0";
     }
     
     if (!form.quantity || Number(form.quantity) < 0) {
-      errors.quantity = "Số lượng không hợp lệ";
+      errors.quantity = "Invalid quantity";
     }
     
     if (form.categoryIds.length === 0) {
-      errors.categoryIds = "Vui lòng chọn ít nhất một danh mục";
+      errors.categoryIds = "Please select at least one category";
     }
     
     if (!imageUrl) {
-      errors.image = "Vui lòng upload ảnh chính cho sản phẩm";
+      errors.image = "Please upload main image for product";
     }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // 🔹 Xử lý thay đổi input
+  // 🔹 Handle input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({
@@ -205,30 +205,30 @@ export function ProductCreate() {
     }
   };
 
-  // 🔹 Xử lý chọn file ảnh
+  // 🔹 Handle image file selection
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Kiểm tra kích thước file (tối đa 5MB)
+    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Kích thước ảnh không được vượt quá 5MB!");
+      toast.error("Image size should not exceed 5MB!");
       return;
     }
 
-    // Kiểm tra định dạng file
+    // Check file format
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
     if (!validTypes.includes(file.type)) {
-      toast.error("Chỉ chấp nhận file ảnh (JPEG, PNG, WEBP)!");
+      toast.error("Only image files accepted (JPEG, PNG, WEBP)!");
       return;
     }
 
     setMainImageFile(file);
-    setImageUploaded(false); // Reset trạng thái upload khi chọn ảnh mới
+    setImageUploaded(false); // Reset upload status when selecting new image
     setImageUrl(""); // Reset URL
-    setUploadResult(null); // Reset kết quả upload
+    setUploadResult(null); // Reset upload result
 
-    // Clear error ảnh
+    // Clear image error
     if (formErrors.image) {
       setFormErrors({
         ...formErrors,
@@ -236,7 +236,7 @@ export function ProductCreate() {
       });
     }
 
-    // Tạo preview
+    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setMainImagePreview(reader.result);
@@ -244,7 +244,7 @@ export function ProductCreate() {
     reader.readAsDataURL(file);
   };
 
-  // 🔹 Xóa ảnh đã chọn
+  // 🔹 Remove selected image
   const removeSelectedImage = () => {
     setMainImageFile(null);
     setMainImagePreview("");
@@ -252,7 +252,7 @@ export function ProductCreate() {
     setImageUploaded(false);
     setUploadResult(null);
     
-    // Clear error ảnh
+    // Clear image error
     if (formErrors.image) {
       setFormErrors({
         ...formErrors,
@@ -261,41 +261,41 @@ export function ProductCreate() {
     }
   };
 
-  // 🔹 Upload ảnh lên server - ĐÃ SỬA
+  // 🔹 Upload image to server - FIXED
   const uploadImageToServer = async (file) => {
     if (!file) {
-      toast.error("Vui lòng chọn ảnh trước khi upload");
+      toast.error("Please select image before uploading");
       return null;
     }
 
     setUploadingImage(true);
     try {
-      console.log("📤 Đang upload ảnh...", file.name);
+      console.log("📤 Uploading image...", file.name);
       
       const res = await imageUploadService.uploadImage(file);
       console.log("📦 Response from service:", res);
 
       if (!res.success) {
-        toast.error(`❌ Upload thất bại: ${res.message}`);
+        toast.error(`❌ Upload failed: ${res.message}`);
         return null;
       }
 
       if (!res.data) {
-        toast.error("❌ Không nhận được dữ liệu từ server");
+        toast.error("❌ No data received from server");
         return null;
       }
 
-      // Lưu toàn bộ kết quả upload
+      // Save entire upload result
       setUploadResult(res.data);
       
-      // KIỂM TRA CÁC TRƯỜNG CÓ THỂ CÓ URL
+      // CHECK FOR POSSIBLE URL FIELDS
       let imageUrl = "";
       
-      // Debug: In tất cả fields trong response
+      // Debug: Print all fields in response
       console.log("🔍 Response data fields:", Object.keys(res.data));
       console.log("🔍 Response data values:", res.data);
       
-      // Tìm URL trong các field có thể có
+      // Find URL in possible fields
       const possibleUrlFields = ['url', 'imageUrl', 'path', 'filePath', 'location', 'image', 'fileName'];
       for (const field of possibleUrlFields) {
         if (res.data[field]) {
@@ -306,43 +306,43 @@ export function ProductCreate() {
       }
       
       if (!imageUrl) {
-        console.error("❌ Không tìm thấy URL trong response:", res.data);
-        toast.error("❌ Server không trả về URL ảnh");
+        console.error("❌ URL not found in response:", res.data);
+        toast.error("❌ Server did not return image URL");
         return null;
       }
       
-      // Xử lý URL
-      // Nếu là tên file, thêm prefix
+      // Process URL
+      // If it's filename, add prefix
       if (!imageUrl.includes('/') && !imageUrl.startsWith('http')) {
         imageUrl = `/static/${imageUrl}`;
       }
       
-      // Thêm base URL nếu cần
+      // Add base URL if needed
       if (imageUrl && !imageUrl.startsWith('http')) {
-        // Đảm bảo có dấu / ở đầu
+        // Ensure leading slash
         if (!imageUrl.startsWith('/')) {
           imageUrl = '/' + imageUrl;
         }
         imageUrl = API_BASE_URL + imageUrl;
       }
       
-      console.log("✅ Upload thành công. Final URL:", imageUrl);
+      console.log("✅ Upload successful. Final URL:", imageUrl);
       
       setImageUrl(imageUrl);
       setImageUploaded(true);
-      toast.success("✅ Upload ảnh thành công!");
+      toast.success("✅ Image uploaded successfully!");
       return { url: imageUrl, data: res.data };
       
     } catch (error) {
-      console.error("❌ Lỗi khi upload ảnh:", error);
-      toast.error("❌ Upload ảnh thất bại!");
+      console.error("❌ Error uploading image:", error);
+      toast.error("❌ Image upload failed!");
       return null;
     } finally {
       setUploadingImage(false);
     }
   };
 
-  // 🔹 Chọn nhiều category
+  // 🔹 Select multiple categories
   const handleCategoryChange = (e) => {
     const selectedIds = Array.from(e.target.selectedOptions, (option) =>
       Number(option.value)
@@ -357,7 +357,7 @@ export function ProductCreate() {
     }
   };
 
-  // 🔹 Xử lý chọn category bằng Chip (alternative)
+  // 🔹 Toggle category using Chip (alternative)
   const toggleCategory = (categoryId) => {
     setForm(prev => {
       const newCategoryIds = prev.categoryIds.includes(categoryId)
@@ -368,7 +368,7 @@ export function ProductCreate() {
     });
   };
 
-  // 🔹 Chọn nhiều tag
+  // 🔹 Select multiple tags
   const handleTagChange = (e) => {
     const selectedIds = Array.from(e.target.selectedOptions, (option) =>
       Number(option.value)
@@ -376,33 +376,33 @@ export function ProductCreate() {
     setForm({ ...form, tagIds: selectedIds });
   };
 
-  // 🧩 Submit form tạo sản phẩm - ĐÃ SỬA
+  // 🧩 Submit form to create product - FIXED
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra nếu đang upload ảnh
+    // Check if currently uploading image
     if (uploadingImage) {
-      toast.warning("⚠️ Đang upload ảnh, vui lòng đợi...");
+      toast.warning("⚠️ Uploading image, please wait...");
       return;
     }
 
-    // Nếu có ảnh nhưng chưa upload, upload ngay
+    // If has image but not uploaded, upload immediately
     if (mainImageFile && !imageUploaded) {
       const result = await uploadImageToServer(mainImageFile);
       if (!result || !result.url) {
-        toast.error("❌ Không thể upload ảnh. Vui lòng thử lại!");
+        toast.error("❌ Cannot upload image. Please try again!");
         return;
       }
     } 
-    // Nếu không có ảnh
+    // If no image
     else if (!mainImageFile) {
-      toast.error("❌ Vui lòng chọn ảnh sản phẩm!");
+      toast.error("❌ Please select product image!");
       return;
     }
 
     // Validate form
     if (!validateForm()) {
-      toast.error("⚠️ Vui lòng kiểm tra lại thông tin!");
+      toast.error("⚠️ Please check your information!");
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -419,7 +419,7 @@ export function ProductCreate() {
         mainImageUrl: imageUrl,
         categoryIds: form.categoryIds,
         tagIds: form.tagIds,
-        // Thêm metadata từ upload nếu có
+        // Add metadata from upload if exists
         ...(uploadResult && { imageMetadata: uploadResult })
       };
 
@@ -428,7 +428,7 @@ export function ProductCreate() {
       const response = await ProductService.createProduct(payload);
       console.log("✅ Product created successfully:", response);
 
-      toast.success("✅ Thêm sản phẩm thành công!");
+      toast.success("✅ Product added successfully!");
  
       setTimeout(() => {
         navigate("/dashboard/products", { state: { reload: true }, replace: true });
@@ -436,10 +436,10 @@ export function ProductCreate() {
       }, 300);
       
     } catch (err) {
-      console.error("❌ Lỗi khi tạo sản phẩm:", err);
+      console.error("❌ Error creating product:", err);
       
-      // Hiển thị chi tiết lỗi
-      let errorMessage = "Không xác định";
+      // Display error details
+      let errorMessage = "Unknown error";
       if (err.response) {
         console.error("❌ Error response:", err.response);
         errorMessage = err.response.data?.message || 
@@ -450,26 +450,26 @@ export function ProductCreate() {
         errorMessage = err.message;
       }
       
-      toast.error(`❌ Thêm sản phẩm thất bại: ${errorMessage}`);
+      toast.error(`❌ Failed to add product: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // Lấy danh sách category đã chọn để hiển thị
+  // Get selected categories for display
   const selectedCategories = flattenedCategories.filter(cat => 
     form.categoryIds.includes(cat.id)
   );
 
-  // Lấy danh sách tag đã chọn để hiển thị
+  // Get selected tags for display
   const selectedTags = tags.filter(tag => 
     form.tagIds.includes(tag.id)
   );
 
-  // 🔄 Tự động upload khi chọn ảnh (tuỳ chọn)
+  // 🔄 Auto-upload when selecting image (optional)
   useEffect(() => {
     if (mainImageFile && !imageUploaded && !uploadingImage) {
-      // Tự động upload sau 1 giây nếu user không upload thủ công
+      // Auto upload after 1 second if user doesn't manually upload
       const autoUploadTimer = setTimeout(() => {
         uploadImageToServer(mainImageFile);
       }, 1000);
@@ -494,13 +494,13 @@ export function ProductCreate() {
                     variant={isMobile ? "h3" : "h2"} 
                     className="text-white font-bold mb-1 md:mb-2"
                   >
-                    Thêm Sản Phẩm Mới
+                    Add New Product
                   </Typography>
                   <Typography 
                     variant="paragraph" 
                     className="text-blue-100 text-sm md:text-base"
                   >
-                    Tạo sản phẩm mới cho cửa hàng của bạn
+                    Create new product for your store
                   </Typography>
                 </div>
               </div>
@@ -511,7 +511,7 @@ export function ProductCreate() {
                 onClick={() => navigate("/dashboard/products")}
               >
                 <ArrowLeftIcon className="h-4 w-4" />
-                <span className="text-sm md:text-base">Quay lại danh sách</span>
+                <span className="text-sm md:text-base">Back to list</span>
               </Button>
             </div>
           </CardBody>
@@ -529,7 +529,7 @@ export function ProductCreate() {
                     color="red" 
                     className="mb-1"
                   >
-                    Vui lòng sửa các lỗi sau:
+                    Please fix the following errors:
                   </Typography>
                   <ul className="list-disc pl-4 md:pl-5 text-xs md:text-sm text-red-600">
                     {Object.values(formErrors).map((error, index) => (
@@ -555,14 +555,14 @@ export function ProductCreate() {
                     variant={isMobile ? "h5" : "h4"} 
                     color="blue-gray"
                   >
-                    Thông tin sản phẩm
+                    Product Information
                   </Typography>
                 </div>
                 <Typography 
                   color="gray" 
                   className="mb-4 md:mb-8 text-sm md:text-base"
                 >
-                  Điền đầy đủ thông tin sản phẩm bên dưới
+                  Fill in complete product information below
                 </Typography>
 
                 <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
@@ -576,11 +576,11 @@ export function ProductCreate() {
                         variant={isMobile ? "small" : "h6"} 
                         color="blue-gray"
                       >
-                        Tên sản phẩm *
+                        Product Name *
                       </Typography>
                     </div>
                     <Input
-                      label="Tên sản phẩm"
+                      label="Product name"
                       name="name"
                       value={form.name}
                       onChange={handleChange}
@@ -609,11 +609,11 @@ export function ProductCreate() {
                         variant={isMobile ? "small" : "h6"} 
                         color="blue-gray"
                       >
-                        Mô tả sản phẩm *
+                        Product Description *
                       </Typography>
                     </div>
                     <Textarea
-                      label="Mô tả sản phẩm"
+                      label="Product description"
                       name="description"
                       value={form.description}
                       onChange={handleChange}
@@ -643,12 +643,12 @@ export function ProductCreate() {
                           variant={isMobile ? "small" : "h6"} 
                           color="blue-gray"
                         >
-                          Giá bán (VND) *
+                          Sale Price (VND) *
                         </Typography>
                       </div>
                       <Input
                         type="number"
-                        label="Giá sản phẩm"
+                        label="Product price"
                         name="price"
                         value={form.price}
                         onChange={handleChange}
@@ -680,12 +680,12 @@ export function ProductCreate() {
                           variant={isMobile ? "small" : "h6"} 
                           color="blue-gray"
                         >
-                          Số lượng *
+                          Quantity *
                         </Typography>
                       </div>
                       <Input
                         type="number"
-                        label="Số lượng"
+                        label="Quantity"
                         name="quantity"
                         value={form.quantity}
                         onChange={handleChange}
@@ -717,7 +717,7 @@ export function ProductCreate() {
                         variant={isMobile ? "small" : "h6"} 
                         color="blue-gray"
                       >
-                        Hình ảnh chính *
+                        Main Image *
                       </Typography>
                     </div>
                     
@@ -748,10 +748,10 @@ export function ProductCreate() {
                             color="gray" 
                             className="mb-1 md:mb-2"
                           >
-                            Click để upload ảnh chính
+                            Click to upload main image
                           </Typography>
                           <Typography variant="small" color="gray">
-                            JPEG, PNG, WEBP (Tối đa 5MB)
+                            JPEG, PNG, WEBP (Max 5MB)
                           </Typography>
                         </label>
                       </div>
@@ -762,13 +762,13 @@ export function ProductCreate() {
                             <div className="flex items-center gap-2">
                               <PhotoIcon className="h-4 w-4 text-green-500" />
                               <Typography variant="small" color="green" className="font-medium">
-                                Ảnh đã chọn
+                                Image selected
                               </Typography>
                               {imageUploaded && (
                                 <div className="flex items-center gap-1 ml-2">
                                   <CheckBadgeIcon className="h-3 w-3 md:h-4 md:w-4 text-blue-500" />
                                   <Typography variant="small" color="blue" className="hidden md:inline">
-                                    Đã upload
+                                    Uploaded
                                   </Typography>
                                 </div>
                               )}
@@ -784,7 +784,7 @@ export function ProductCreate() {
                                   disabled={uploadingImage}
                                 >
                                   <CloudArrowUpIcon className="h-3 w-3 md:h-4 md:w-4" />
-                                  {isMobile ? 'Upload' : 'Upload lên server'}
+                                  {isMobile ? 'Upload' : 'Upload to server'}
                                 </Button>
                               )}
                               <Button
@@ -796,7 +796,7 @@ export function ProductCreate() {
                                 disabled={uploadingImage}
                               >
                                 <TrashIcon className="h-3 w-3 md:h-4 md:w-4" />
-                                {isMobile ? 'Xóa' : 'Xóa ảnh'}
+                                {isMobile ? 'Delete' : 'Delete image'}
                               </Button>
                             </div>
                           </div>
@@ -840,11 +840,11 @@ export function ProductCreate() {
                                   <div className="flex items-center gap-1">
                                     <ExclamationCircleIcon className="h-3 w-3 text-amber-500" />
                                     <Typography variant="small" color="amber" className="font-medium">
-                                      ⚠️ Chưa upload lên server
+                                      ⚠️ Not uploaded to server
                                     </Typography>
                                   </div>
                                   <Typography variant="small" color="gray">
-                                    Nhấn "Upload lên server" trước khi tạo sản phẩm
+                                    Click "Upload to server" before creating product
                                   </Typography>
                                 </div>
                               )}
@@ -854,7 +854,7 @@ export function ProductCreate() {
                       </div>
                     )}
                     <Typography variant="small" color="gray" className="mt-2">
-                      Ảnh này sẽ hiển thị ở trang danh sách và là ảnh đại diện
+                      This image will display on list page and is the featured image
                     </Typography>
                   </div>
 
@@ -868,7 +868,7 @@ export function ProductCreate() {
                         variant={isMobile ? "small" : "h6"} 
                         color="blue-gray"
                       >
-                        Danh mục *
+                        Categories *
                       </Typography>
                     </div>
 
@@ -897,7 +897,7 @@ export function ProductCreate() {
                           </option>
                         ))
                       ) : (
-                        <option disabled>Đang tải danh mục...</option>
+                        <option disabled>Loading categories...</option>
                       )}
                     </select>
 
@@ -911,14 +911,14 @@ export function ProductCreate() {
                     )}
 
                     <Typography variant="small" color="gray" className="mt-1">
-                      Giữ Ctrl hoặc Cmd để chọn nhiều danh mục
+                      Hold Ctrl or Cmd to select multiple categories
                     </Typography>
 
                     {/* Selected Categories Chips */}
                     {selectedCategories.length > 0 && (
                       <div className="mt-2 md:mt-3">
                         <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                          Đã chọn ({selectedCategories.length}):
+                          Selected ({selectedCategories.length}):
                         </Typography>
                         <div className="flex flex-wrap gap-1 md:gap-2">
                           {selectedCategories.map((cat) => (
@@ -946,7 +946,7 @@ export function ProductCreate() {
                         variant={isMobile ? "small" : "h6"} 
                         color="blue-gray"
                       >
-                        Tags (tùy chọn)
+                        Tags (optional)
                       </Typography>
                     </div>
 
@@ -967,19 +967,19 @@ export function ProductCreate() {
                           </option>
                         ))
                       ) : (
-                        <option disabled>Đang tải tags...</option>
+                        <option disabled>Loading tags...</option>
                       )}
                     </select>
 
                     <Typography variant="small" color="gray" className="mt-1">
-                      Giữ Ctrl hoặc Cmd để chọn nhiều tags
+                      Hold Ctrl or Cmd to select multiple tags
                     </Typography>
 
                     {/* Selected Tags Chips */}
                     {selectedTags.length > 0 && (
                       <div className="mt-2 md:mt-3">
                         <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                          Đã chọn ({selectedTags.length}):
+                          Selected ({selectedTags.length}):
                         </Typography>
                         <div className="flex flex-wrap gap-1 md:gap-2">
                           {selectedTags.map((tag) => (
@@ -1012,11 +1012,11 @@ export function ProductCreate() {
                           variant={isMobile ? "small" : "h6"} 
                           color="blue-gray"
                         >
-                          Trạng thái hoạt động
+                          Active status
                         </Typography>
                       </div>
                       <Typography variant="small" color="gray">
-                        Sản phẩm sẽ được hiển thị trên cửa hàng
+                        Product will be displayed in store
                       </Typography>
                     </div>
                   </div>
@@ -1031,7 +1031,7 @@ export function ProductCreate() {
                       disabled={loading || uploadingImage}
                       size={isMobile ? "md" : "lg"}
                     >
-                      Hủy bỏ
+                      Cancel
                     </Button>
                     <Button
                       type="submit"
@@ -1043,12 +1043,12 @@ export function ProductCreate() {
                       {(loading) ? (
                         <>
                           <Spinner className="h-4 w-4" />
-                          <span className="text-sm md:text-base">Đang tạo sản phẩm...</span>
+                          <span className="text-sm md:text-base">Creating product...</span>
                         </>
                       ) : (
                         <>
                           <PlusIcon className="h-4 w-4" />
-                          <span className="text-sm md:text-base">Tạo sản phẩm</span>
+                          <span className="text-sm md:text-base">Create product</span>
                         </>
                       )}
                     </Button>
@@ -1058,7 +1058,7 @@ export function ProductCreate() {
             </Card>
           </div>
 
-          {/* Preview Sidebar - Ẩn trên mobile nếu quá nhỏ */}
+          {/* Preview Sidebar - Hide on mobile if too small */}
           <div className={`lg:col-span-1 ${isMobile ? 'hidden' : 'block'}`}>
             <Card className="shadow-xl border-0 sticky top-6">
               <CardBody className="p-4 md:p-6">
@@ -1070,7 +1070,7 @@ export function ProductCreate() {
                     variant={isMobile ? "h5" : "h5"} 
                     color="blue-gray"
                   >
-                    Xem trước sản phẩm
+                    Product Preview
                   </Typography>
                 </div>
 
@@ -1109,13 +1109,13 @@ export function ProductCreate() {
                         {form.name}
                       </Typography>
                       <Typography variant="small" color="gray" className="mt-1 line-clamp-3">
-                        {form.description || "Chưa có mô tả"}
+                        {form.description || "No description"}
                       </Typography>
                     </div>
                   ) : (
                     <div className="text-center py-2">
                       <Typography color="gray" className="text-sm italic">
-                        Chưa có tên sản phẩm
+                        No product name
                       </Typography>
                     </div>
                   )}
@@ -1133,14 +1133,14 @@ export function ProductCreate() {
                     </Typography>
                   ) : (
                     <Typography variant="small" color="gray" className="italic">
-                      Chưa có giá
+                      No price set
                     </Typography>
                   )}
 
                   {selectedCategories.length > 0 && (
                     <div>
                       <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                        Danh mục:
+                        Categories:
                       </Typography>
                       <div className="flex flex-wrap gap-1">
                         {selectedCategories.map((cat) => (
@@ -1183,7 +1183,7 @@ export function ProductCreate() {
                       variant="small" 
                       className={form.active ? 'text-green-600' : 'text-red-600'}
                     >
-                      {form.active ? 'Đang Bán' : 'Ngừng Bán'}
+                      {form.active ? 'Active' : 'Inactive'}
                     </Typography>
                   </div>
 
@@ -1192,7 +1192,7 @@ export function ProductCreate() {
                       <div className="flex items-center gap-1">
                         <ExclamationCircleIcon className="h-3 w-3 md:h-4 md:w-4 text-amber-500" />
                         <Typography variant="small" color="amber">
-                          Ảnh chưa được upload lên server
+                          Image not uploaded to server
                         </Typography>
                       </div>
                     </div>
@@ -1209,7 +1209,7 @@ export function ProductCreate() {
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
                 <Typography variant="h6" color="blue-gray">
-                  Xem trước sản phẩm
+                  Product Preview
                 </Typography>
                 <IconButton
                   variant="text"
@@ -1251,7 +1251,7 @@ export function ProductCreate() {
                       {form.name}
                     </Typography>
                     <Typography variant="small" color="gray" className="line-clamp-2">
-                      {form.description || "Chưa có mô tả"}
+                      {form.description || "No description"}
                     </Typography>
                   </div>
                 )}

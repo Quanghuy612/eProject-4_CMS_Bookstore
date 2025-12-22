@@ -17,7 +17,11 @@ import {
   Input,
   Tabs,
   TabsHeader,
-  Tab
+  Tab,
+  Menu,
+  MenuHandler,
+  MenuList,
+  MenuItem
 } from "@material-tailwind/react";
 import { 
   EyeIcon, 
@@ -29,7 +33,10 @@ import {
   XCircleIcon,
   ClockIcon,
   FunnelIcon,
-  XMarkIcon
+  XMarkIcon,
+  ChevronDownIcon,
+  ArrowUpIcon,
+  ArrowDownIcon
 } from "@heroicons/react/24/outline";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import OrderService from "@/services/order/OrderService";
@@ -42,6 +49,7 @@ export function OrderList() {
   const [updatingId, setUpdatingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+  const [sortOrder, setSortOrder] = useState("newest"); // "newest" or "oldest"
   const [statusCounts, setStatusCounts] = useState({
     ALL: 0,
     PENDING: 0,
@@ -52,13 +60,19 @@ export function OrderList() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Danh sách trạng thái
+  // Status list
   const STATUS_OPTIONS = [
-    { value: 'ALL', label: 'Tất cả', color: 'gray' },
-    { value: 'PENDING', label: 'Chờ xác nhận', color: 'amber' },
-    { value: 'CONFIRMED', label: 'Đã xác nhận', color: 'blue' },
-    { value: 'COMPLETED', label: 'Hoàn thành', color: 'green' },
-    { value: 'CANCELLED', label: 'Đã hủy', color: 'red' }
+    { value: 'ALL', label: 'All', color: 'gray' },
+    { value: 'PENDING', label: 'Pending confirmation', color: 'amber' },
+    { value: 'CONFIRMED', label: 'Confirmed', color: 'blue' },
+    { value: 'COMPLETED', label: 'Completed', color: 'green' },
+    { value: 'CANCELLED', label: 'Cancelled', color: 'red' }
+  ];
+
+  // Sort options
+  const SORT_OPTIONS = [
+    { value: 'newest', label: 'Newest First', icon: <ArrowDownIcon className="h-4 w-4" /> },
+    { value: 'oldest', label: 'Oldest First', icon: <ArrowUpIcon className="h-4 w-4" /> }
   ];
 
   useEffect(() => {
@@ -66,7 +80,7 @@ export function OrderList() {
     fetchOrders();
   }, []);
 
-  // Tính toán số lượng đơn hàng theo trạng thái
+  // Calculate order counts by status
   useEffect(() => {
     if (orders.length > 0) {
       const counts = {
@@ -80,16 +94,16 @@ export function OrderList() {
     }
   }, [orders]);
 
-  // Lọc đơn hàng khi searchTerm hoặc selectedStatus thay đổi
+  // Filter and sort orders when searchTerm, selectedStatus, or sortOrder changes
   useEffect(() => {
     let filtered = [...orders];
 
-    // Lọc theo trạng thái
+    // Filter by status
     if (selectedStatus !== 'ALL') {
       filtered = filtered.filter(order => order.status === selectedStatus);
     }
 
-    // Lọc theo từ khóa tìm kiếm
+    // Filter by search keyword
     if (searchTerm.trim() !== "") {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(order => 
@@ -101,8 +115,15 @@ export function OrderList() {
       );
     }
 
+    // Sort by date
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0);
+      const dateB = new Date(b.createdAt || 0);
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+
     setFilteredOrders(filtered);
-  }, [orders, selectedStatus, searchTerm]);
+  }, [orders, selectedStatus, searchTerm, sortOrder]);
 
   const fetchOrders = async () => {
     try {
@@ -114,7 +135,7 @@ export function OrderList() {
       
       const formattedOrders = Array.isArray(data) ? data.map(order => ({
         id: order.orderId,
-        orderCode: `DH-${order.orderId}`,
+        orderCode: `ORD-${order.orderId}`,
         totalPrice: order.totalPrice || 0,
         status: order.status || 'PENDING',
         customerName: order.fullName || 'N/A',
@@ -126,11 +147,18 @@ export function OrderList() {
         username: order.username
       })) : [];
       
+      // Sort by newest first initially
+      formattedOrders.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0);
+        const dateB = new Date(b.createdAt || 0);
+        return dateB - dateA;
+      });
+      
       setOrders(formattedOrders);
       setFilteredOrders(formattedOrders);
     } catch (err) {
       console.error("Error fetching orders:", err);
-      setError(err.response?.data?.message || err.message || "Không thể tải danh sách đơn hàng");
+      setError(err.response?.data?.message || err.message || "Unable to load order list");
       setOrders([]);
       setFilteredOrders([]);
     } finally {
@@ -150,10 +178,10 @@ export function OrderList() {
 
   const getStatusText = (status) => {
     const statusMap = {
-      PENDING: "Chờ xác nhận",
-      CONFIRMED: "Đã xác nhận",
-      COMPLETED: "Hoàn thành",
-      CANCELLED: "Đã hủy"
+      PENDING: "Pending confirmation",
+      CONFIRMED: "Confirmed",
+      COMPLETED: "Completed",
+      CANCELLED: "Cancelled"
     };
     return statusMap[status] || status;
   };
@@ -178,14 +206,14 @@ export function OrderList() {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
+    return date.toLocaleDateString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     });
   };
 
-  // Hàm cập nhật trạng thái
+  // Function to update status
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
       setUpdatingId(orderId);
@@ -193,7 +221,7 @@ export function OrderList() {
       console.log(`Updating order ${orderId} status to ${newStatus}`);
       await OrderService.updateOrderStatus(orderId, newStatus);
       
-      // Cập nhật trạng thái trong state
+      // Update status in state
       setOrders(prevOrders => 
         prevOrders.map(order => 
           order.id === orderId 
@@ -205,19 +233,20 @@ export function OrderList() {
       console.log('Status updated successfully');
     } catch (err) {
       console.error("Error updating status:", err);
-      alert(`Lỗi khi cập nhật trạng thái: ${err.message}`);
+      alert(`Error updating status: ${err.message}`);
     } finally {
       setUpdatingId(null);
     }
   };
 
-  // Reset bộ lọc
+  // Reset filters
   const handleResetFilters = () => {
     setSelectedStatus("ALL");
     setSearchTerm("");
+    setSortOrder("newest");
   };
 
-  // Render nút cập nhật nhanh theo trạng thái hiện tại
+  // Render quick update buttons based on current status
   const renderQuickActionButtons = (order) => {
     const { id, status } = order;
     
@@ -225,7 +254,7 @@ export function OrderList() {
       case 'PENDING':
         return (
           <div className="flex gap-1">
-            <Tooltip content="Xác nhận đơn hàng">
+            <Tooltip content="Confirm order">
               <IconButton
                 color="blue"
                 size="sm"
@@ -236,7 +265,7 @@ export function OrderList() {
                 <CheckCircleIcon className="h-4 w-4" />
               </IconButton>
             </Tooltip>
-            <Tooltip content="Hủy đơn hàng">
+            <Tooltip content="Cancel order">
               <IconButton
                 color="red"
                 size="sm"
@@ -253,7 +282,7 @@ export function OrderList() {
       case 'CONFIRMED':
         return (
           <div className="flex gap-1">
-            <Tooltip content="Hoàn thành đơn hàng">
+            <Tooltip content="Complete order">
               <IconButton
                 color="green"
                 size="sm"
@@ -264,7 +293,7 @@ export function OrderList() {
                 <CheckCircleIcon className="h-4 w-4" />
               </IconButton>
             </Tooltip>
-            <Tooltip content="Hủy đơn hàng">
+            <Tooltip content="Cancel order">
               <IconButton
                 color="red"
                 size="sm"
@@ -282,7 +311,7 @@ export function OrderList() {
         return (
           <Chip
             color="green"
-            value="Đã hoàn thành"
+            value="Completed"
             className="px-3 py-1"
           />
         );
@@ -291,7 +320,7 @@ export function OrderList() {
         return (
           <Chip
             color="red"
-            value="Đã hủy"
+            value="Cancelled"
             className="px-3 py-1"
           />
         );
@@ -301,7 +330,17 @@ export function OrderList() {
     }
   };
 
-  // ✅ Nếu route là /create hoặc /:id → render Outlet (child routes)
+  // Get current sort label
+  const getCurrentSortLabel = () => {
+    return SORT_OPTIONS.find(option => option.value === sortOrder)?.label || "Sort by";
+  };
+
+  // Get current sort icon
+  const getCurrentSortIcon = () => {
+    return SORT_OPTIONS.find(option => option.value === sortOrder)?.icon || <ChevronDownIcon className="h-4 w-4" />;
+  };
+
+  // ✅ If route is /create or /:id → render Outlet (child routes)
   if (location.pathname.includes("/create") || location.pathname.match(/\/\d+$/)) {
     console.log("Rendering outlet for:", location.pathname);
     return <Outlet />;
@@ -312,7 +351,7 @@ export function OrderList() {
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Spinner className="h-12 w-12 text-blue-500" />
         <Typography variant="h6" color="blue-gray" className="mt-4">
-          Đang tải danh sách đơn hàng...
+          Loading order list...
         </Typography>
       </div>
     );
@@ -327,7 +366,7 @@ export function OrderList() {
           className="mb-4"
         >
           <Typography variant="h6" color="red">
-            Lỗi khi tải dữ liệu
+            Error loading data
           </Typography>
           <Typography color="red" className="mt-2">
             {error}
@@ -338,7 +377,7 @@ export function OrderList() {
             className="mt-4"
             onClick={fetchOrders}
           >
-            Thử lại
+            Try again
           </Button>
         </Alert>
       </div>
@@ -358,17 +397,18 @@ export function OrderList() {
               <ShoppingCartIcon className="h-7 w-7 text-white" />
               <div>
                 <Typography variant="h4" color="white" className="font-bold">
-                  Quản lý Đơn hàng
+                  Order Management
                 </Typography>
                 <Typography variant="small" color="white" className="opacity-90 mt-1">
-                  Tổng cộng: <span className="font-semibold">{statusCounts.ALL}</span> đơn hàng
-                  {selectedStatus !== 'ALL' && ` • Đang xem: ${getStatusText(selectedStatus)} (${statusCounts[selectedStatus]})`}
+                  Total: <span className="font-semibold">{statusCounts.ALL}</span> orders
+                  {selectedStatus !== 'ALL' && ` • Viewing: ${getStatusText(selectedStatus)} (${statusCounts[selectedStatus]})`}
+                  {sortOrder !== 'newest' && ` • Sorted: ${getCurrentSortLabel()}`}
                 </Typography>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
-              <Tooltip content="Làm mới dữ liệu">
+              <Tooltip content="Refresh data">
                 <IconButton
                   color="white"
                   variant="text"
@@ -383,10 +423,10 @@ export function OrderList() {
         </CardHeader>
         
         <CardBody className="px-6 pt-0 pb-2">
-          {/* Bộ lọc và tìm kiếm */}
+          {/* Filter and search */}
           <div className="mb-8 bg-white rounded-lg p-4 shadow-md">
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              {/* Tabs lọc theo trạng thái */}
+              {/* Status filter tabs */}
               <div className="w-full md:w-auto">
                 <Tabs value={selectedStatus} className="overflow-x-auto">
                   <TabsHeader className="flex flex-nowrap">
@@ -416,55 +456,89 @@ export function OrderList() {
                 </Tabs>
               </div>
 
-              {/* Tìm kiếm */}
-              <div className="w-full md:w-64">
-                <div className="relative">
-                  <Input
-                    label="Tìm kiếm mã đơn hàng..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    icon={<FunnelIcon className="h-5 w-5" />}
-                    className="pr-10"
-                  />
-                  {searchTerm && (
-                    <IconButton
-                      variant="text"
+              {/* Search and Sort Controls */}
+              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                {/* Sort Menu */}
+                <Menu>
+                  <MenuHandler>
+                    <Button
+                      variant="outlined"
+                      color="blue-gray"
+                      className="flex items-center gap-2"
                       size="sm"
-                      className="!absolute right-1 top-1.5"
-                      onClick={() => setSearchTerm("")}
                     >
-                      <XMarkIcon className="h-4 w-4" />
-                    </IconButton>
-                  )}
-                </div>
-              </div>
+                      {getCurrentSortIcon()}
+                      {getCurrentSortLabel()}
+                      <ChevronDownIcon className="h-4 w-4" />
+                    </Button>
+                  </MenuHandler>
+                  <MenuList>
+                    {SORT_OPTIONS.map((option) => (
+                      <MenuItem
+                        key={option.value}
+                        onClick={() => setSortOrder(option.value)}
+                        className="flex items-center gap-2"
+                      >
+                        {option.icon}
+                        {option.label}
+                        {sortOrder === option.value && (
+                          <CheckCircleIcon className="h-4 w-4 ml-auto text-green-500" />
+                        )}
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Menu>
 
-              {/* Nút reset bộ lọc */}
-              {(selectedStatus !== 'ALL' || searchTerm) && (
-                <Button
-                  variant="outlined"
-                  color="gray"
-                  size="sm"
-                  onClick={handleResetFilters}
-                  className="flex items-center gap-2"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                  Xóa bộ lọc
-                </Button>
-              )}
+                {/* Search */}
+                <div className="w-full md:w-64">
+                  <div className="relative">
+                    <Input
+                      label="Search order code..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      icon={<FunnelIcon className="h-5 w-5" />}
+                      className="pr-10"
+                    />
+                    {searchTerm && (
+                      <IconButton
+                        variant="text"
+                        size="sm"
+                        className="!absolute right-1 top-1.5"
+                        onClick={() => setSearchTerm("")}
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </IconButton>
+                    )}
+                  </div>
+                </div>
+
+                {/* Reset filter button */}
+                {(selectedStatus !== 'ALL' || searchTerm || sortOrder !== 'newest') && (
+                  <Button
+                    variant="outlined"
+                    color="gray"
+                    size="sm"
+                    onClick={handleResetFilters}
+                    className="flex items-center gap-2"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                    Clear filters
+                  </Button>
+                )}
+              </div>
             </div>
 
-            {/* Thống kê chi tiết theo trạng thái */}
+            {/* Detailed statistics by status */}
             <div className="mt-6">
               <Typography variant="small" color="blue-gray" className="font-semibold mb-3">
-                📊 Thống kê đơn hàng:
+                📊 Order statistics:
               </Typography>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <Typography variant="small" color="blue-gray" className="font-bold">
-                        Tất cả
+                        All
                       </Typography>
                       <Typography variant="h5" className="font-bold text-gray-800">
                         {statusCounts.ALL}
@@ -482,7 +556,7 @@ export function OrderList() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Typography variant="small" color="blue-gray" className="font-bold">
-                        Chờ xác nhận
+                        Pending confirmation
                       </Typography>
                       <Typography variant="h5" className="font-bold text-amber-700">
                         {statusCounts.PENDING}
@@ -501,7 +575,7 @@ export function OrderList() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Typography variant="small" color="blue-gray" className="font-bold">
-                        Đã xác nhận
+                        Confirmed
                       </Typography>
                       <Typography variant="h5" className="font-bold text-blue-700">
                         {statusCounts.CONFIRMED}
@@ -520,7 +594,7 @@ export function OrderList() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Typography variant="small" color="blue-gray" className="font-bold">
-                        Hoàn thành
+                        Completed
                       </Typography>
                       <Typography variant="h5" className="font-bold text-green-700">
                         {statusCounts.COMPLETED}
@@ -539,7 +613,7 @@ export function OrderList() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Typography variant="small" color="blue-gray" className="font-bold">
-                        Đã hủy
+                        Cancelled
                       </Typography>
                       <Typography variant="h5" className="font-bold text-red-700">
                         {statusCounts.CANCELLED}
@@ -555,18 +629,43 @@ export function OrderList() {
                 </div>
               </div>
             </div>
+
+            {/* Sort indicator */}
+            <div className="mt-4 flex items-center justify-between">
+              <Typography variant="small" color="blue-gray" className="font-medium">
+                Currently sorted: <span className="font-bold">{getCurrentSortLabel()}</span>
+              </Typography>
+              {sortOrder === 'newest' && (
+                <Chip
+                  value="Most Recent First"
+                  color="blue"
+                  size="sm"
+                  className="flex items-center gap-1"
+                  icon={<ArrowDownIcon className="h-4 w-4" />}
+                />
+              )}
+              {sortOrder === 'oldest' && (
+                <Chip
+                  value="Oldest First"
+                  color="amber"
+                  size="sm"
+                  className="flex items-center gap-1"
+                  icon={<ArrowUpIcon className="h-4 w-4" />}
+                />
+              )}
+            </div>
           </div>
 
           {filteredOrders.length === 0 ? (
             <div className="text-center py-16">
               <ShoppingCartIcon className="h-20 w-20 text-gray-300 mx-auto mb-4" />
               <Typography variant="h5" color="blue-gray" className="mb-2">
-                {selectedStatus !== 'ALL' || searchTerm ? "Không tìm thấy đơn hàng phù hợp" : "Chưa có đơn hàng nào"}
+                {selectedStatus !== 'ALL' || searchTerm ? "No matching orders found" : "No orders yet"}
               </Typography>
               <Typography color="gray" className="mb-6 max-w-md mx-auto">
                 {selectedStatus !== 'ALL' || searchTerm 
-                  ? "Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"
-                  : "Hiện tại chưa có đơn hàng nào được tạo trong hệ thống"}
+                  ? "Try changing filters or search keywords"
+                  : "No orders have been created in the system yet"}
               </Typography>
               {(selectedStatus !== 'ALL' || searchTerm) && (
                 <Button
@@ -575,16 +674,21 @@ export function OrderList() {
                   className="flex items-center gap-2 mx-auto"
                 >
                   <XMarkIcon className="h-4 w-4" />
-                  Xem tất cả đơn hàng
+                  View all orders
                 </Button>
               )}
             </div>
           ) : (
             <>
-              {/* Tóm tắt nhanh */}
+              {/* Quick summary */}
               <div className="mb-8">
                 <Typography variant="h6" color="blue-gray" className="font-bold mb-4">
-                  📋 Danh sách đơn hàng ({filteredOrders.length}/{orders.length})
+                  📋 Order list ({filteredOrders.length}/{orders.length})
+                  {sortOrder !== 'newest' && (
+                    <span className="ml-2 text-sm font-normal text-amber-600">
+                      (Sorted: {getCurrentSortLabel()})
+                    </span>
+                  )}
                 </Typography>
                 
                 <div className="flex flex-wrap gap-3">
@@ -613,13 +717,22 @@ export function OrderList() {
                 <table className="w-full min-w-[1000px] table-auto">
                   <thead>
                     <tr className="border-b border-blue-gray-100 bg-blue-gray-50/50">
-                      {["Mã đơn", "Khách hàng", "Ngày đặt", "Tổng tiền", "Trạng thái", "Thao tác", "Chi tiết"].map((el) => (
+                      {["Order Code", "Customer", "Order Date", "Total Amount", "Status", "Actions", "Details"].map((el) => (
                         <th key={el} className="py-4 px-6 text-left">
                           <Typography 
                             variant="small" 
                             className="text-xs font-bold uppercase text-blue-gray-700"
                           >
                             {el}
+                            {el === "Order Date" && (
+                              <div className="inline-block ml-2">
+                                {sortOrder === 'newest' ? (
+                                  <ArrowDownIcon className="h-3 w-3 text-blue-500 inline" />
+                                ) : (
+                                  <ArrowUpIcon className="h-3 w-3 text-amber-500 inline" />
+                                )}
+                              </div>
+                            )}
                           </Typography>
                         </th>
                       ))}
@@ -640,7 +753,7 @@ export function OrderList() {
                             ${isUpdating ? 'opacity-50' : ''}
                           `}
                         >
-                          {/* Mã đơn hàng */}
+                          {/* Order code */}
                           <td className="py-5 px-6">
                             <div className="flex flex-col">
                               <div className="flex items-center gap-2">
@@ -657,7 +770,7 @@ export function OrderList() {
                             </div>
                           </td>
                           
-                          {/* Thông tin khách hàng */}
+                          {/* Customer information */}
                           <td className="py-5 px-6">
                             <div className="flex items-start gap-3">
                               <Avatar
@@ -687,7 +800,7 @@ export function OrderList() {
                             </div>
                           </td>
                           
-                          {/* Ngày đặt */}
+                          {/* Order date */}
                           <td className="py-5 px-6">
                             <div className="flex items-center gap-2">
                               <CalendarDaysIcon className="h-4 w-4 text-blue-gray-400" />
@@ -697,7 +810,7 @@ export function OrderList() {
                                 </Typography>
                                 {order.createdAt && (
                                   <Typography variant="small" className="text-xs text-blue-gray-500">
-                                    {new Date(order.createdAt).toLocaleTimeString('vi-VN', {
+                                    {new Date(order.createdAt).toLocaleTimeString('en-US', {
                                       hour: '2-digit',
                                       minute: '2-digit'
                                     })}
@@ -707,7 +820,7 @@ export function OrderList() {
                             </div>
                           </td>
                           
-                          {/* Tổng tiền */}
+                          {/* Total amount */}
                           <td className="py-5 px-6">
                             <div className="flex items-center gap-2">
                               <CurrencyDollarIcon className="h-4 w-4 text-green-600" />
@@ -720,12 +833,12 @@ export function OrderList() {
                             </div>
                             {order.orderDetails && order.orderDetails.length > 0 && (
                               <Typography variant="small" className="text-xs text-blue-gray-500 mt-1">
-                                {order.orderDetails.length} sản phẩm
+                                {order.orderDetails.length} products
                               </Typography>
                             )}
                           </td>
                           
-                          {/* Trạng thái */}
+                          {/* Status */}
                           <td className="py-5 px-6">
                             <div className="flex items-center gap-2">
                               <div className={`h-3 w-3 rounded-full bg-${getStatusColor(order.status)}-500`}></div>
@@ -738,25 +851,25 @@ export function OrderList() {
                             </div>
                           </td>
                           
-                          {/* Thao tác cập nhật trạng thái */}
+                          {/* Status update actions */}
                           <td className="py-5 px-6">
                             <div className="flex flex-col gap-2">
                               {isUpdating ? (
                                 <div className="flex items-center gap-2">
                                   <Spinner className="h-4 w-4" />
                                   <Typography variant="small" color="blue-gray">
-                                    Đang cập nhật...
+                                    Updating...
                                   </Typography>
                                 </div>
                               ) : (
                                 <>
                                   {renderQuickActionButtons(order)}
                                   
-                                  {/* Dropdown chọn trạng thái */}
+                                  {/* Status selection dropdown */}
                                   <div className="mt-2">
                                     <Select
                                       size="sm"
-                                      label="Chọn trạng thái"
+                                      label="Select status"
                                       value={order.status}
                                       onChange={(value) => handleUpdateStatus(order.id, value)}
                                       disabled={isUpdating}
@@ -777,7 +890,7 @@ export function OrderList() {
                             </div>
                           </td>
                           
-                          {/* Link sang xem chi tiết */}
+                          {/* Link to view details */}
                           <td className="py-5 px-6">
                             <div className="flex justify-start">
                               <Link to={`${order.id}`}>
@@ -789,7 +902,7 @@ export function OrderList() {
                                   disabled={isUpdating}
                                 >
                                   <EyeIcon className="h-4 w-4" />
-                                  Xem chi tiết
+                                  View details
                                 </Button>
                               </Link>
                             </div>
@@ -801,28 +914,33 @@ export function OrderList() {
                 </table>
               </div>
               
-              {/* Footer với thống kê chi tiết */}
+              {/* Footer with detailed statistics */}
               <div className="px-6 py-4 border-t border-blue-gray-100 bg-blue-gray-50/50 mt-6">
                 <div className="flex flex-col md:flex-row justify-between items-center">
                   <div className="mb-4 md:mb-0">
                     <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                      📈 Tổng hợp:
+                      📈 Summary:
                     </Typography>
                     <div className="flex flex-wrap gap-3">
                       <Chip
                         color="blue"
-                        value={`Hiển thị: ${filteredOrders.length}/${orders.length} đơn hàng`}
+                        value={`Showing: ${filteredOrders.length}/${orders.length} orders`}
                         className="px-3"
                       />
                       <Chip
                         color="green"
-                        value={`Tổng doanh thu: ${formatCurrency(filteredOrders.reduce((sum, order) => sum + order.totalPrice, 0))}`}
+                        value={`Total revenue: ${formatCurrency(filteredOrders.reduce((sum, order) => sum + order.totalPrice, 0))}`}
+                        className="px-3"
+                      />
+                      <Chip
+                        color="purple"
+                        value={`Sorted: ${getCurrentSortLabel()}`}
                         className="px-3"
                       />
                       {selectedStatus !== 'ALL' && (
                         <Chip
                           color="amber"
-                          value={`Đang lọc: ${getStatusText(selectedStatus)}`}
+                          value={`Filtered: ${getStatusText(selectedStatus)}`}
                           className="px-3"
                         />
                       )}
@@ -830,7 +948,37 @@ export function OrderList() {
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <Tooltip content="Làm mới dữ liệu">
+                    <Menu>
+                      <MenuHandler>
+                        <Button
+                          variant="outlined"
+                          color="blue-gray"
+                          size="sm"
+                          className="flex items-center gap-2"
+                        >
+                          {getCurrentSortIcon()}
+                          Sort
+                          <ChevronDownIcon className="h-4 w-4" />
+                        </Button>
+                      </MenuHandler>
+                      <MenuList>
+                        {SORT_OPTIONS.map((option) => (
+                          <MenuItem
+                            key={option.value}
+                            onClick={() => setSortOrder(option.value)}
+                            className="flex items-center gap-2"
+                          >
+                            {option.icon}
+                            {option.label}
+                            {sortOrder === option.value && (
+                              <CheckCircleIcon className="h-4 w-4 ml-auto text-green-500" />
+                            )}
+                          </MenuItem>
+                        ))}
+                      </MenuList>
+                    </Menu>
+
+                    <Tooltip content="Refresh data">
                       <IconButton
                         color="blue"
                         variant="text"
@@ -841,7 +989,7 @@ export function OrderList() {
                         <ArrowPathIcon className="h-4 w-4" />
                       </IconButton>
                     </Tooltip>
-                    {(selectedStatus !== 'ALL' || searchTerm) && (
+                    {(selectedStatus !== 'ALL' || searchTerm || sortOrder !== 'newest') && (
                       <Button
                         variant="outlined"
                         color="gray"
@@ -850,7 +998,7 @@ export function OrderList() {
                         className="flex items-center gap-2"
                       >
                         <XMarkIcon className="h-4 w-4" />
-                        Xóa bộ lọc
+                        Clear filters
                       </Button>
                     )}
                   </div>
@@ -861,7 +1009,7 @@ export function OrderList() {
         </CardBody>
       </Card>
 
-      {/* Outlet để render OrderDetail */}
+      {/* Outlet to render OrderDetail */}
       <Outlet />
     </div>
   );

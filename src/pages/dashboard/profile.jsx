@@ -51,7 +51,7 @@ export function Profile() {
 
   const location = useLocation();
 
-  // Kiểm tra kích thước màn hình
+  // Check screen size
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -82,7 +82,7 @@ export function Profile() {
     fetchProducts();
   }, [page, size]);
 
-  // ✅ Khi thêm mới từ trang Create
+  // ✅ When adding new from Create page
   useEffect(() => {
     if (location.state?.newProduct) {
       setProducts((prev) => [location.state.newProduct, ...prev]);
@@ -90,14 +90,14 @@ export function Profile() {
     }
   }, [location.state]);
 
-  // ✅ Hàm xóa sản phẩm
+  // ✅ Delete product function
   const handleDelete = async (id) => {
     try {
       await ProductService.deleteProduct(id);
       setProducts((prev) => prev.filter((p) => p.id !== id));
       setDeleteDialog({ open: false, product: null });
     } catch (err) {
-      alert("Lỗi khi xóa sản phẩm: " + err);
+      alert("Error deleting product: " + err);
     }
   };
 
@@ -114,7 +114,7 @@ export function Profile() {
     return text?.length > length ? text.substring(0, length) + '...' : text;
   };
 
-  // ✅ Lọc sản phẩm theo search và status
+  // ✅ Filter products by search and status
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -124,7 +124,7 @@ export function Profile() {
     return matchesSearch && matchesStatus;
   });
 
-  // ✅ Khi bấm Edit hoặc Create → render Outlet
+  // ✅ When clicking Edit or Create → render Outlet
   if (
     location.pathname.includes("/products/create") ||
     location.pathname.match(/\/products\/\d+$/) ||
@@ -139,10 +139,10 @@ export function Profile() {
         <div className="text-center">
           <Spinner className="h-16 w-16 text-blue-500 mx-auto mb-4" />
           <Typography variant="h5" color="blue-gray" className="mb-2">
-            Đang tải sản phẩm...
+            Loading products...
           </Typography>
           <Typography variant="small" color="gray">
-            Vui lòng chờ trong giây lát
+            Please wait a moment
           </Typography>
         </div>
       </div>
@@ -155,14 +155,14 @@ export function Profile() {
           <CardBody className="text-center">
             <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <Typography variant="h5" color="red" className="mb-2">
-              Đã xảy ra lỗi
+              An error occurred
             </Typography>
             <Typography color="gray" className="mb-4">
               {error}
             </Typography>
             <Button color="blue" onClick={fetchProducts} className="flex items-center gap-2 mx-auto">
               <ArrowPathIcon className="h-4 w-4" />
-              Thử lại
+              Try Again
             </Button>
           </CardBody>
         </Card>
@@ -185,10 +185,10 @@ export function Profile() {
                 </div>
                 <div>
                   <Typography variant="h4" className="text-white font-bold mb-1 sm:mb-2 text-lg sm:text-2xl lg:text-3xl">
-                    Quản lý Sản phẩm
+                    Product Management
                   </Typography>
                   <Typography variant="paragraph" className="text-blue-100 text-xs sm:text-sm">
-                    Quản lý {totalElements} sản phẩm trong cửa hàng của bạn
+                    Manage {totalElements} products in your store
                   </Typography>
                 </div>
               </div>
@@ -198,7 +198,7 @@ export function Profile() {
                   size={isMobile ? "md" : "lg"}
                 >
                   <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span>Thêm sản phẩm</span>
+                  <span>Add Product</span>
                 </Button>
               </Link>
             </div>
@@ -212,7 +212,7 @@ export function Profile() {
               <div className="flex items-center justify-between">
                 <div>
                   <Typography variant="small" color="blue-gray" className="font-medium mb-1 text-xs sm:text-sm">
-                    Tổng sản phẩm
+                    Total Products
                   </Typography>
                   <Typography variant="h4" className="text-blue-600 font-bold text-lg sm:text-xl lg:text-2xl">
                     {totalElements}
@@ -230,7 +230,7 @@ export function Profile() {
               <div className="flex items-center justify-between">
                 <div>
                   <Typography variant="small" color="blue-gray" className="font-medium mb-1 text-xs sm:text-sm">
-                    Đang hoạt động
+                    Active
                   </Typography>
                   <Typography variant="h4" className="text-green-600 font-bold text-lg sm:text-xl lg:text-2xl">
                     {products.filter(p => p.active).length}
@@ -248,7 +248,7 @@ export function Profile() {
               <div className="flex items-center justify-between">
                 <div>
                   <Typography variant="small" color="blue-gray" className="font-medium mb-1 text-xs sm:text-sm">
-                    Ngừng bán
+                    Inactive
                   </Typography>
                   <Typography variant="h4" className="text-red-600 font-bold text-lg sm:text-xl lg:text-2xl">
                     {products.filter(p => !p.active).length}
@@ -266,7 +266,7 @@ export function Profile() {
               <div className="flex items-center justify-between">
                 <div>
                   <Typography variant="small" color="blue-gray" className="font-medium mb-1 text-xs sm:text-sm">
-                    Tổng giá trị
+                    Total Value
                   </Typography>
                   <Typography variant="h5" className="text-purple-600 font-bold text-base sm:text-lg lg:text-xl">
                     {formatCurrency(products.reduce((sum, p) => sum + (p.price || 0), 0))}
@@ -287,7 +287,7 @@ export function Profile() {
               <div className="flex-1">
                 <Input
                   icon={<MagnifyingGlassIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
-                  label="Tìm kiếm sản phẩm..."
+                  label="Search products..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="!border-t-blue-gray-200 text-sm sm:text-base"
@@ -298,31 +298,31 @@ export function Profile() {
                 <Select 
                   value={statusFilter} 
                   onChange={(value) => setStatusFilter(value)}
-                  label="Trạng thái"
+                  label="Status"
                   className="min-w-full sm:min-w-[150px]"
                   icon={<FunnelIcon className="h-4 w-4" />}
                   size={isMobile ? "md" : "lg"}
                 >
-                  <Option value="ALL">Tất cả</Option>
-                  <Option value="ACTIVE">Đang bán</Option>
-                  <Option value="INACTIVE">Ngừng bán</Option>
+                  <Option value="ALL">All</Option>
+                  <Option value="ACTIVE">Active</Option>
+                  <Option value="INACTIVE">Inactive</Option>
                 </Select>
                 
                 <Select 
                   value={size} 
                   onChange={(value) => setSize(Number(value))} 
-                  label="Hiển thị"
+                  label="Show"
                   className="min-w-full sm:min-w-[120px]"
                   size={isMobile ? "md" : "lg"}
                 >
-                  <Option value={5}>5 / trang</Option>
-                  <Option value={10}>10 / trang</Option>
-                  <Option value={20}>20 / trang</Option>
-                  <Option value={50}>50 / trang</Option>
+                  <Option value={5}>5 per page</Option>
+                  <Option value={10}>10 per page</Option>
+                  <Option value={20}>20 per page</Option>
+                  <Option value={50}>50 per page</Option>
                 </Select>
 
                 <div className="flex justify-center sm:justify-start">
-                  <Tooltip content="Làm mới">
+                  <Tooltip content="Refresh">
                     <IconButton 
                       variant="outlined" 
                       onClick={fetchProducts} 
@@ -344,10 +344,10 @@ export function Profile() {
             <div className="p-3 sm:p-4 lg:p-6 bg-white border-b border-blue-gray-50 flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
               <div>
                 <Typography variant="h5" color="blue-gray" className="font-semibold text-lg sm:text-xl">
-                  Danh sách sản phẩm
+                  Product List
                 </Typography>
                 <Typography variant="small" color="gray" className="text-xs sm:text-sm">
-                  Hiển thị {filteredProducts.length} sản phẩm
+                  Showing {filteredProducts.length} products
                 </Typography>
               </div>
             </div>
@@ -359,18 +359,18 @@ export function Profile() {
                   <div className="text-center py-8">
                     <ShoppingBagIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                     <Typography variant="h6" color="gray" className="mb-2 text-sm">
-                      {searchTerm || statusFilter !== "ALL" ? "Không tìm thấy sản phẩm phù hợp" : "Chưa có sản phẩm nào"}
+                      {searchTerm || statusFilter !== "ALL" ? "No matching products found" : "No products yet"}
                     </Typography>
                     <Typography color="gray" className="mb-4 text-xs">
                       {searchTerm || statusFilter !== "ALL" 
-                        ? "Hãy thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc của bạn" 
-                        : "Hãy thêm sản phẩm đầu tiên của bạn để bắt đầu kinh doanh"
+                        ? "Try adjusting your search keyword or filter" 
+                        : "Add your first product to start your business"
                       }
                     </Typography>
                     <Link to="create">
                       <Button color="blue" size="sm" className="flex items-center gap-2 mx-auto">
                         <PlusIcon className="h-3 w-3" />
-                        Thêm sản phẩm
+                        Add Product
                       </Button>
                     </Link>
                   </div>
@@ -392,35 +392,35 @@ export function Profile() {
                                 {product.name}
                               </Typography>
                               <Chip
-                                value={product.active ? "Đang bán" : "Ngừng bán"}
+                                value={product.active ? "Active" : "Inactive"}
                                 size="sm"
                                 color={product.active ? "green" : "red"}
                                 className="rounded-full text-xs"
                               />
                             </div>
                             <Typography variant="small" color="gray" className="mb-2 text-xs line-clamp-2">
-                              {truncateText(product.description || 'Chưa có mô tả', 60)}
+                              {truncateText(product.description || 'No description', 60)}
                             </Typography>
                             <div className="flex justify-between items-center">
                               <Typography variant="h6" color="green" className="font-bold text-sm">
                                 {formatCurrency(product.price)}
                               </Typography>
                               <div className="flex gap-1">
-                                <Tooltip content="Xem chi tiết">
+                                <Tooltip content="View details">
                                   <Link to={`${product.id}`}>
                                     <IconButton variant="text" color="blue" size="sm">
                                       <EyeIcon className="h-3.5 w-3.5" />
                                     </IconButton>
                                   </Link>
                                 </Tooltip>
-                                <Tooltip content="Chỉnh sửa">
+                                <Tooltip content="Edit">
                                   <Link to={`update/${product.id}`}>
                                     <IconButton variant="text" color="green" size="sm">
                                       <PencilIcon className="h-3.5 w-3.5" />
                                     </IconButton>
                                   </Link>
                                 </Tooltip>
-                                <Tooltip content="Xóa">
+                                <Tooltip content="Delete">
                                   <IconButton
                                     variant="text"
                                     color="red"
@@ -449,27 +449,27 @@ export function Profile() {
                     <tr className="bg-gradient-to-r from-blue-50 to-indigo-50">
                       <th className="p-3 sm:p-4 text-left">
                         <Typography variant="small" color="blue-gray" className="font-semibold">
-                          SẢN PHẨM
+                          PRODUCT
                         </Typography>
                       </th>
                       <th className="p-3 sm:p-4 text-left hidden lg:table-cell">
                         <Typography variant="small" color="blue-gray" className="font-semibold">
-                          MÔ TẢ
+                          DESCRIPTION
                         </Typography>
                       </th>
                       <th className="p-3 sm:p-4 text-left">
                         <Typography variant="small" color="blue-gray" className="font-semibold">
-                          GIÁ
+                          PRICE
                         </Typography>
                       </th>
                       <th className="p-3 sm:p-4 text-left">
                         <Typography variant="small" color="blue-gray" className="font-semibold">
-                          TRẠNG THÁI
+                          STATUS
                         </Typography>
                       </th>
                       <th className="p-3 sm:p-4 text-center">
                         <Typography variant="small" color="blue-gray" className="font-semibold">
-                          THAO TÁC
+                          ACTIONS
                         </Typography>
                       </th>
                     </tr>
@@ -480,18 +480,18 @@ export function Profile() {
                         <td colSpan={5} className="p-6 lg:p-8 text-center">
                           <ShoppingBagIcon className="h-12 w-12 lg:h-16 lg:w-16 text-gray-300 mx-auto mb-3" />
                           <Typography variant="h6" color="gray" className="mb-2">
-                            {searchTerm || statusFilter !== "ALL" ? "Không tìm thấy sản phẩm phù hợp" : "Chưa có sản phẩm nào"}
+                            {searchTerm || statusFilter !== "ALL" ? "No matching products found" : "No products yet"}
                           </Typography>
                           <Typography color="gray" className="mb-4 max-w-md mx-auto">
                             {searchTerm || statusFilter !== "ALL" 
-                              ? "Hãy thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc của bạn" 
-                              : "Hãy thêm sản phẩm đầu tiên của bạn để bắt đầu kinh doanh"
+                              ? "Try adjusting your search keyword or filter" 
+                              : "Add your first product to start your business"
                             }
                           </Typography>
                           <Link to="create">
                             <Button color="blue" className="flex items-center gap-2 mx-auto">
                               <PlusIcon className="h-4 w-4" />
-                              Thêm sản phẩm
+                              Add Product
                             </Button>
                           </Link>
                         </td>
@@ -526,7 +526,7 @@ export function Profile() {
                           </td>
                           <td className="p-3 sm:p-4 hidden lg:table-cell">
                             <Typography variant="paragraph" color="blue-gray" className="max-w-xs line-clamp-2 text-sm">
-                              {product.description || 'Chưa có mô tả'}
+                              {product.description || 'No description'}
                             </Typography>
                           </td>
                           <td className="p-3 sm:p-4">
@@ -541,7 +541,7 @@ export function Profile() {
                           </td>
                           <td className="p-3 sm:p-4">
                             <Chip
-                              value={product.active ? "Đang bán" : "Ngừng bán"}
+                              value={product.active ? "Active" : "Inactive"}
                               size="sm"
                               color={product.active ? "green" : "red"}
                               variant="gradient"
@@ -550,21 +550,21 @@ export function Profile() {
                           </td>
                           <td className="p-3 sm:p-4">
                             <div className="flex justify-center gap-1">
-                              <Tooltip content="Xem chi tiết">
+                              <Tooltip content="View details">
                                 <Link to={`${product.id}`}>
                                   <IconButton variant="text" color="blue" size="sm" className="hover:bg-blue-50">
                                     <EyeIcon className="h-4 w-4" />
                                   </IconButton>
                                 </Link>
                               </Tooltip>
-                              <Tooltip content="Chỉnh sửa">
+                              <Tooltip content="Edit">
                                 <Link to={`update/${product.id}`}>
                                   <IconButton variant="text" color="green" size="sm" className="hover:bg-green-50">
                                     <PencilIcon className="h-4 w-4" />
                                   </IconButton>
                                 </Link>
                               </Tooltip>
-                              <Tooltip content="Xóa">
+                              <Tooltip content="Delete">
                                 <IconButton
                                   variant="text"
                                   color="red"
@@ -589,7 +589,7 @@ export function Profile() {
             {filteredProducts.length > 0 && totalPages > 1 && (
               <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-3 sm:p-4 lg:p-6 bg-gray-50 border-t">
                 <Typography variant="small" color="gray" className="text-xs sm:text-sm">
-                  Hiển thị {page * size + 1}-{Math.min((page + 1) * size, totalElements)} của {totalElements} sản phẩm
+                  Showing {page * size + 1}-{Math.min((page + 1) * size, totalElements)} of {totalElements} products
                 </Typography>
                 <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
                   <Button 
@@ -600,7 +600,7 @@ export function Profile() {
                     className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm"
                   >
                     <ChevronDoubleLeftIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                    {!isMobile && "Đầu"}
+                    {!isMobile && "First"}
                   </Button>
                   <Button 
                     variant="outlined" 
@@ -610,7 +610,7 @@ export function Profile() {
                     className="px-2 sm:px-3 text-xs sm:text-sm"
                   >
                     <ChevronLeftIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                    {!isMobile && "Trước"}
+                    {!isMobile && "Previous"}
                   </Button>
                   <div className="flex items-center px-2 sm:px-3 bg-white rounded border">
                     <Typography variant="small" className="font-medium text-xs sm:text-sm">
@@ -624,7 +624,7 @@ export function Profile() {
                     onClick={() => setPage(prev => Math.min(prev + 1, totalPages - 1))}
                     className="px-2 sm:px-3 text-xs sm:text-sm"
                   >
-                    {!isMobile && "Sau"}
+                    {!isMobile && "Next"}
                     <ChevronRightIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button 
@@ -634,7 +634,7 @@ export function Profile() {
                     onClick={() => setPage(totalPages - 1)}
                     className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm"
                   >
-                    {!isMobile && "Cuối"}
+                    {!isMobile && "Last"}
                     <ChevronDoubleRightIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
@@ -655,16 +655,16 @@ export function Profile() {
             <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
           </div>
           <Typography variant="h5" color="red" className="text-lg sm:text-xl">
-            Xác nhận xóa
+            Confirm Deletion
           </Typography>
         </DialogHeader>
         <DialogBody className="pt-4 sm:pt-6">
           <Typography variant="paragraph" color="blue-gray" className="mb-3 sm:mb-4 text-sm sm:text-base">
-            Bạn có chắc chắn muốn xóa sản phẩm <strong>"{deleteDialog.product?.name}"</strong> không?
+            Are you sure you want to delete the product <strong>"{deleteDialog.product?.name}"</strong>?
           </Typography>
           <Typography variant="small" color="red" className="flex items-center gap-1 text-xs sm:text-sm">
             <ExclamationTriangleIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-            Hành động này không thể hoàn tác.
+            This action cannot be undone.
           </Typography>
         </DialogBody>
         <DialogFooter className="gap-2 sm:gap-3 border-t pt-3 sm:pt-4">
@@ -675,7 +675,7 @@ export function Profile() {
             className="mr-auto text-xs sm:text-sm"
             size={isMobile ? "sm" : "md"}
           >
-            Hủy bỏ
+            Cancel
           </Button>
           <Button
             variant="gradient"
@@ -685,7 +685,7 @@ export function Profile() {
             size={isMobile ? "sm" : "md"}
           >
             <TrashIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-            Xóa sản phẩm
+            Delete Product
           </Button>
         </DialogFooter>
       </Dialog>

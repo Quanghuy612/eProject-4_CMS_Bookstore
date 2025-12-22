@@ -53,17 +53,17 @@ export function OrderDetail() {
       setOrder(data);
     } catch (err) {
       console.error("Error fetching order detail:", err);
-      setError(err.response?.data?.message || err.message || "Không thể tải chi tiết đơn hàng");
+      setError(err.response?.data?.message || err.message || "Unable to load order details");
     } finally {
       setLoading(false);
     }
   };
 
   const STATUS_OPTIONS = [
-    { value: 'PENDING', label: 'Chờ xác nhận', color: 'amber' },
-    { value: 'CONFIRMED', label: 'Đã xác nhận', color: 'blue' },
-    { value: 'COMPLETED', label: 'Hoàn thành', color: 'green' },
-    { value: 'CANCELLED', label: 'Đã hủy', color: 'red' }
+    { value: 'PENDING', label: 'Pending confirmation', color: 'amber' },
+    { value: 'CONFIRMED', label: 'Confirmed', color: 'blue' },
+    { value: 'COMPLETED', label: 'Completed', color: 'green' },
+    { value: 'CANCELLED', label: 'Cancelled', color: 'red' }
   ];
 
   const getStatusColor = (status) => {
@@ -78,10 +78,10 @@ export function OrderDetail() {
 
   const getStatusText = (status) => {
     const statusMap = {
-      PENDING: "Chờ xác nhận",
-      CONFIRMED: "Đã xác nhận",
-      COMPLETED: "Hoàn thành",
-      CANCELLED: "Đã hủy"
+      PENDING: "Pending confirmation",
+      CONFIRMED: "Confirmed",
+      COMPLETED: "Completed",
+      CANCELLED: "Cancelled"
     };
     return statusMap[status] || status;
   };
@@ -107,7 +107,7 @@ export function OrderDetail() {
   const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleString('vi-VN', {
+    return date.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -133,7 +133,7 @@ export function OrderDetail() {
       console.log('Status updated successfully');
     } catch (err) {
       console.error("Error updating status:", err);
-      alert(`Lỗi khi cập nhật trạng thái: ${err.message}`);
+      alert(`Error updating status: ${err.message}`);
     } finally {
       setUpdatingStatus(false);
     }
@@ -156,14 +156,14 @@ export function OrderDetail() {
               className="flex items-center justify-center gap-2"
             >
               <CheckCircleIcon className="h-5 w-5" />
-              Xác nhận đơn hàng
+              Confirm order
             </Button>
             <Button
               color="red"
               variant="outlined"
               fullWidth
               onClick={() => {
-                if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) {
+                if (window.confirm("Are you sure you want to cancel this order?")) {
                   handleUpdateStatus('CANCELLED');
                 }
               }}
@@ -171,7 +171,7 @@ export function OrderDetail() {
               className="flex items-center justify-center gap-2"
             >
               <XCircleIcon className="h-5 w-5" />
-              Hủy đơn hàng
+              Cancel order
             </Button>
           </div>
         );
@@ -187,14 +187,14 @@ export function OrderDetail() {
               className="flex items-center justify-center gap-2"
             >
               <CheckCircleIcon className="h-5 w-5" />
-              Đánh dấu đã hoàn thành
+              Mark as completed
             </Button>
             <Button
               color="red"
               variant="outlined"
               fullWidth
               onClick={() => {
-                if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) {
+                if (window.confirm("Are you sure you want to cancel this order?")) {
                   handleUpdateStatus('CANCELLED');
                 }
               }}
@@ -202,7 +202,7 @@ export function OrderDetail() {
               className="flex items-center justify-center gap-2"
             >
               <XCircleIcon className="h-5 w-5" />
-              Hủy đơn hàng
+              Cancel order
             </Button>
           </div>
         );
@@ -212,10 +212,10 @@ export function OrderDetail() {
           <div className="text-center py-4">
             <CheckCircleIcon className="h-12 w-12 text-green-500 mx-auto mb-2" />
             <Typography variant="h6" color="green">
-              Đơn hàng đã hoàn thành
+              Order completed
             </Typography>
             <Typography variant="small" color="gray">
-              Không thể thay đổi trạng thái
+              Status cannot be changed
             </Typography>
           </div>
         );
@@ -225,10 +225,10 @@ export function OrderDetail() {
           <div className="text-center py-4">
             <XCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-2" />
             <Typography variant="h6" color="red">
-              Đơn hàng đã hủy
+              Order cancelled
             </Typography>
             <Typography variant="small" color="gray">
-              Không thể thay đổi trạng thái
+              Status cannot be changed
             </Typography>
           </div>
         );
@@ -237,7 +237,6 @@ export function OrderDetail() {
         return null;
     }
   };
-
 
   const handleBack = () => {
     navigate("/dashboard/orders"); 
@@ -248,7 +247,7 @@ export function OrderDetail() {
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Spinner className="h-12 w-12 text-blue-500" />
         <Typography variant="h6" color="blue-gray" className="mt-4">
-          Đang tải chi tiết đơn hàng...
+          Loading order details...
         </Typography>
       </div>
     );
@@ -263,7 +262,7 @@ export function OrderDetail() {
           className="mb-4"
         >
           <Typography variant="h6" color="red">
-            Lỗi khi tải dữ liệu
+            Error loading data
           </Typography>
           <Typography color="red" className="mt-2">
             {error}
@@ -274,14 +273,14 @@ export function OrderDetail() {
               variant="text"
               onClick={fetchOrderDetail}
             >
-              Thử lại
+              Try again
             </Button>
             <Button 
               color="blue" 
               variant="text"
               onClick={handleBack} 
             >
-              Quay lại danh sách đơn hàng
+              Back to order list
             </Button>
           </div>
         </Alert>
@@ -298,10 +297,10 @@ export function OrderDetail() {
           className="mb-4"
         >
           <Typography variant="h6" color="amber">
-            Không tìm thấy đơn hàng
+            Order not found
           </Typography>
           <Typography color="amber" className="mt-2">
-            Đơn hàng với ID {id} không tồn tại hoặc đã bị xóa.
+            Order with ID {id} does not exist or has been deleted.
           </Typography>
           <Button 
             color="amber" 
@@ -309,7 +308,7 @@ export function OrderDetail() {
             className="mt-4"
             onClick={handleBack} 
           >
-            Quay lại danh sách đơn hàng
+            Back to order list
           </Button>
         </Alert>
       </div>
@@ -318,7 +317,7 @@ export function OrderDetail() {
 
   return (
     <div className="mt-8 mb-8 flex flex-col gap-8">
-      {/* Header với nút quay lại */}
+      {/* Header with back button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
@@ -328,15 +327,15 @@ export function OrderDetail() {
             onClick={handleBack} 
           >
             <ArrowLeftIcon strokeWidth={2} className="h-4 w-4" />
-            Quay lại danh sách
+            Back to list
           </Button>
           <Typography variant="h4" color="blue-gray" className="font-bold">
-            Chi tiết đơn hàng #{order.orderId || id}
+            Order details #{order.orderId || id}
           </Typography>
         </div>
         
         <div className="flex items-center gap-2">
-          <Tooltip content="Làm mới">
+          <Tooltip content="Refresh">
             <IconButton 
               color="blue" 
               variant="text" 
@@ -350,9 +349,9 @@ export function OrderDetail() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cột trái: Thông tin chính */}
+        {/* Left column: Main information */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Card thông tin đơn hàng */}
+          {/* Order information card */}
           <Card className="shadow-lg">
             <CardHeader 
               variant="gradient" 
@@ -362,7 +361,7 @@ export function OrderDetail() {
               <div className="flex items-center gap-3">
                 <ShoppingBagIcon className="h-6 w-6 text-white" />
                 <Typography variant="h5" color="white" className="font-bold">
-                  Thông tin đơn hàng
+                  Order Information
                 </Typography>
               </div>
               <div className="flex items-center gap-2">
@@ -383,10 +382,10 @@ export function OrderDetail() {
                   </div>
                   <div>
                     <Typography variant="small" color="blue-gray" className="font-semibold">
-                      Mã đơn hàng
+                      Order code
                     </Typography>
                     <Typography variant="h6" className="font-bold">
-                      {order.orderCode || `DH-${order.orderId || id}`}
+                      {order.orderCode || `ORD-${order.orderId || id}`}
                     </Typography>
                   </div>
                 </div>
@@ -397,7 +396,7 @@ export function OrderDetail() {
                   </div>
                   <div>
                     <Typography variant="small" color="blue-gray" className="font-semibold">
-                      Ngày đặt
+                      Order date
                     </Typography>
                     <Typography variant="h6" className="font-bold">
                       {formatDateTime(order.createdAt)}
@@ -411,7 +410,7 @@ export function OrderDetail() {
                   </div>
                   <div>
                     <Typography variant="small" color="blue-gray" className="font-semibold">
-                      Tổng tiền
+                      Total amount
                     </Typography>
                     <Typography variant="h6" className="font-bold text-green-700">
                       {formatCurrency(order.totalPrice)}
@@ -425,10 +424,10 @@ export function OrderDetail() {
                   </div>
                   <div>
                     <Typography variant="small" color="blue-gray" className="font-semibold">
-                      Số sản phẩm
+                      Number of items
                     </Typography>
                     <Typography variant="h6" className="font-bold">
-                      {order.orderDetails?.length || 0} sản phẩm
+                      {order.orderDetails?.length || 0} items
                     </Typography>
                   </div>
                 </div>
@@ -436,7 +435,7 @@ export function OrderDetail() {
             </CardBody>
           </Card>
 
-          {/* Card thông tin khách hàng */}
+          {/* Customer information card */}
           <Card className="shadow-lg">
             <CardHeader 
               color="blue" 
@@ -446,7 +445,7 @@ export function OrderDetail() {
               <div className="flex items-center gap-3">
                 <UserCircleIcon className="h-6 w-6 text-white" />
                 <Typography variant="h5" color="white" className="font-bold">
-                  Thông tin khách hàng
+                  Customer Information
                 </Typography>
               </div>
             </CardHeader>
@@ -460,7 +459,7 @@ export function OrderDetail() {
                 />
                 <div className="flex-1">
                   <Typography variant="h4" color="blue-gray" className="font-bold mb-2">
-                    {order.fullName || "Khách hàng ẩn danh"}
+                    {order.fullName || "Anonymous customer"}
                   </Typography>
                   {order.username && (
                     <Typography variant="small" color="blue-gray" className="mb-1">
@@ -475,7 +474,7 @@ export function OrderDetail() {
                           Email
                         </Typography>
                         <Typography variant="paragraph">
-                          {order.email || "Không có email"}
+                          {order.email || "No email"}
                         </Typography>
                       </div>
                     </div>
@@ -483,10 +482,10 @@ export function OrderDetail() {
                       <PhoneIcon className="h-5 w-5 text-blue-gray-400" />
                       <div>
                         <Typography variant="small" color="blue-gray" className="font-semibold">
-                          Số điện thoại
+                          Phone number
                         </Typography>
                         <Typography variant="paragraph">
-                          {order.phone || "Không có số điện thoại"}
+                          {order.phone || "No phone number"}
                         </Typography>
                       </div>
                     </div>
@@ -498,19 +497,19 @@ export function OrderDetail() {
                 <div className="flex items-center gap-3 mb-3">
                   <HomeIcon className="h-5 w-5 text-blue-gray-400" />
                   <Typography variant="h6" color="blue-gray" className="font-semibold">
-                    Địa chỉ giao hàng
+                    Shipping address
                   </Typography>
                 </div>
                 <div className="p-4 bg-blue-gray-50/50 rounded-lg border border-blue-gray-100">
                   <Typography variant="paragraph" className="font-medium">
-                    {order.address || "Chưa có thông tin địa chỉ"}
+                    {order.address || "No address information"}
                   </Typography>
                 </div>
               </div>
             </CardBody>
           </Card>
 
-          {/* Card sản phẩm trong đơn hàng */}
+          {/* Order items card */}
           <Card className="shadow-lg">
             <CardHeader 
               color="blue" 
@@ -520,7 +519,7 @@ export function OrderDetail() {
               <div className="flex items-center gap-3">
                 <ShoppingBagIcon className="h-6 w-6 text-white" />
                 <Typography variant="h5" color="white" className="font-bold">
-                  Sản phẩm đã đặt
+                  Order Items
                 </Typography>
               </div>
             </CardHeader>
@@ -532,22 +531,22 @@ export function OrderDetail() {
                       <tr>
                         <th className="py-4 px-6 text-left">
                           <Typography variant="small" className="font-bold uppercase">
-                            Sản phẩm
+                            Product
                           </Typography>
                         </th>
                         <th className="py-4 px-6 text-left">
                           <Typography variant="small" className="font-bold uppercase">
-                            Đơn giá
+                            Unit Price
                           </Typography>
                         </th>
                         <th className="py-4 px-6 text-left">
                           <Typography variant="small" className="font-bold uppercase">
-                            Số lượng
+                            Quantity
                           </Typography>
                         </th>
                         <th className="py-4 px-6 text-left">
                           <Typography variant="small" className="font-bold uppercase">
-                            Thành tiền
+                            Subtotal
                           </Typography>
                         </th>
                       </tr>
@@ -575,7 +574,7 @@ export function OrderDetail() {
                               )}
                               <div>
                                 <Typography variant="small" className="font-bold">
-                                  {item.productName || `Sản phẩm ${index + 1}`}
+                                  {item.productName || `Product ${index + 1}`}
                                 </Typography>
                                 {item.productId && (
                                   <Typography variant="small" color="blue-gray" className="text-xs">
@@ -614,22 +613,22 @@ export function OrderDetail() {
                 <div className="text-center py-12">
                   <ShoppingBagIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <Typography variant="h6" color="blue-gray" className="mb-2">
-                    Không có sản phẩm trong đơn hàng
+                    No items in this order
                   </Typography>
                   <Typography color="gray">
-                    Đơn hàng này chưa có sản phẩm nào
+                    This order doesn't contain any items
                   </Typography>
                 </div>
               )}
               
-              {/* Tổng kết */}
+              {/* Summary */}
               <div className="p-6 border-t border-blue-gray-100">
                 <div className="flex justify-end">
                   <div className="w-80">
                     <div className="border-t border-blue-gray-200 pt-3">
                       <div className="flex justify-between">
                         <Typography variant="h6" color="blue-gray" className="font-bold">
-                          Tổng cộng:
+                          Total:
                         </Typography>
                         <Typography variant="h5" className="font-bold text-green-700">
                           {formatCurrency(order.totalPrice)}
@@ -643,19 +642,19 @@ export function OrderDetail() {
           </Card>
         </div>
 
-        {/* Cột phải: Hành động */}
+        {/* Right column: Actions */}
         <div className="space-y-8">
-          {/* Card cập nhật trạng thái */}
+          {/* Status update card */}
           <Card className="shadow-lg">
             <CardHeader color="blue" className="p-6">
               <Typography variant="h5" color="blue-gray" className="font-bold">
-                Cập nhật trạng thái
+                Update Status
               </Typography>
             </CardHeader>
             <CardBody className="p-6 space-y-4">
               <div className="space-y-2">
                 <Typography variant="small" color="blue-gray" className="font-semibold">
-                  Trạng thái hiện tại:
+                  Current status:
                 </Typography>
                 <div className="flex items-center gap-2 p-3 bg-blue-gray-50 rounded-lg">
                   <div className={`h-3 w-3 rounded-full bg-${getStatusColor(order.status)}-500`}></div>
@@ -667,15 +666,15 @@ export function OrderDetail() {
               
               <div className="space-y-2">
                 <Typography variant="small" color="blue-gray" className="font-semibold">
-                  Hành động nhanh:
+                  Quick actions:
                 </Typography>
                 {renderStatusActions()}
               </div>
               
-              {/* Tất cả trạng thái để chọn */}
+              {/* All status options to choose from */}
               <div className="pt-4 border-t border-blue-gray-100">
                 <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
-                  Chọn trạng thái khác:
+                  Select other status:
                 </Typography>
                 <div className="grid grid-cols-2 gap-2">
                   {STATUS_OPTIONS.map(option => (
@@ -700,42 +699,42 @@ export function OrderDetail() {
                 <div className="flex items-center justify-center gap-2 pt-4">
                   <Spinner className="h-4 w-4" />
                   <Typography variant="small" color="blue-gray">
-                    Đang cập nhật trạng thái...
+                    Updating status...
                   </Typography>
                 </div>
               )}
             </CardBody>
           </Card>
 
-          {/* Card thông tin thêm */}
+          {/* Additional information card */}
           <Card className="shadow-lg">
             <CardHeader color="blue-gray" className="p-6">
               <Typography variant="h5" color="blue-gray" className="font-bold">
-                Thông tin thêm
+                Additional Information
               </Typography>
             </CardHeader>
             <CardBody className="p-6 space-y-4">
               <div>
                 <Typography variant="small" color="blue-gray" className="font-semibold">
-                  Ghi chú của khách hàng:
+                  Customer notes:
                 </Typography>
                 <Typography variant="small" className="text-blue-gray-600 mt-1">
-                  {order.notes || "Không có ghi chú"}
+                  {order.notes || "No notes"}
                 </Typography>
               </div>
               
               <div>
                 <Typography variant="small" color="blue-gray" className="font-semibold">
-                  Phương thức thanh toán:
+                  Payment method:
                 </Typography>
                 <Typography variant="small" className="text-blue-gray-600 mt-1">
-                  {order.paymentMethod || "Chưa xác định"}
+                  {order.paymentMethod || "Not specified"}
                 </Typography>
               </div>
               
               <div>
                 <Typography variant="small" color="blue-gray" className="font-semibold">
-                  Thời gian cập nhật cuối:
+                  Last updated:
                 </Typography>
                 <Typography variant="small" className="text-blue-gray-600 mt-1">
                   {formatDateTime(order.updatedAt || order.createdAt)}

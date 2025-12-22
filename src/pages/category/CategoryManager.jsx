@@ -30,7 +30,7 @@ import {
   DialogFooter,
 } from "@material-tailwind/react";
 
-// Component hiển thị cây con
+// Component to display child categories
 const CategoryChildren = ({ node, onDelete, onEdit }) => {
   if (!node.children || node.children.length === 0) return null;
 
@@ -48,7 +48,7 @@ const CategoryChildren = ({ node, onDelete, onEdit }) => {
           <ChevronRightIcon className="w-4 h-4" />
         )}
         <span className="font-medium">
-          {expanded ? "Ẩn danh mục con" : `Hiện ${node.children.length} danh mục con`}
+          {expanded ? "Hide subcategories" : `Show ${node.children.length} subcategories`}
         </span>
       </button>
 
@@ -61,7 +61,7 @@ const CategoryChildren = ({ node, onDelete, onEdit }) => {
                   <FolderIcon className="w-4 h-4 text-blue-500" />
                   <span className="font-medium text-gray-900">{child.name}</span>
                   <Chip
-                    value={`Cấp ${child.categoryLevel}`}
+                    value={`Level ${child.categoryLevel}`}
                     color="green"
                     size="sm"
                     className="rounded-full"
@@ -94,7 +94,7 @@ const CategoryChildren = ({ node, onDelete, onEdit }) => {
   );
 };
 
-// Node trong cây chính
+// Main tree node
 const CategoryNode = ({ node, onSelect, isSelected, onDelete, onEdit }) => {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = node.children && node.children.length > 0;
@@ -141,7 +141,7 @@ const CategoryNode = ({ node, onSelect, isSelected, onDelete, onEdit }) => {
                 {node.name}
               </Typography>
               <Chip
-                value={`Cấp ${node.categoryLevel}`}
+                value={`Level ${node.categoryLevel}`}
                 color="blue"
                 size="sm"
                 variant="outlined"
@@ -159,14 +159,14 @@ const CategoryNode = ({ node, onSelect, isSelected, onDelete, onEdit }) => {
             <button
               onClick={() => onEdit(node)}
               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Chỉnh sửa"
+              title="Edit"
             >
               <PencilIcon className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(node.id, node.name)}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Xóa"
+              title="Delete"
             >
               <TrashIcon className="w-4 h-4" />
             </button>
@@ -216,7 +216,7 @@ const CategoryManager = () => {
       setAllCategories(res.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      showMessage("Lỗi khi tải danh sách danh mục", "error");
+      showMessage("Error loading categories list", "error");
     } finally {
       setLoading(false);
     }
@@ -232,7 +232,7 @@ const CategoryManager = () => {
     e.preventDefault();
 
     if (!newCategoryName.trim()) {
-      showMessage("Vui lòng nhập tên danh mục!", "error");
+      showMessage("Please enter category name!", "error");
       return;
     }
 
@@ -248,7 +248,7 @@ const CategoryManager = () => {
           payload.categoryLevel = parentCategory.categoryLevel + 1;
           
           if (payload.categoryLevel > 3) {
-            showMessage("Không thể tạo danh mục cấp 4 trở lên!", "error");
+            showMessage("Cannot create category beyond level 3!", "error");
             return;
           }
         }
@@ -259,17 +259,17 @@ const CategoryManager = () => {
 
       await categoryService.createCategory(payload);
       
-      showMessage("Tạo danh mục thành công!", "success");
+      showMessage("Category created successfully!", "success");
       resetForm();
       fetchCategories();
 
     } catch (error) {
       console.error("Error creating category:", error);
-      showMessage(error.response?.data?.message || "Tạo danh mục thất bại!", "error");
+      showMessage(error.response?.data?.message || "Failed to create category!", "error");
     }
   };
 
-  // XÓA DANH MỤC
+  // DELETE CATEGORY
   const handleDeleteCategory = async (id, name) => {
     setCategoryToDelete({ id, name });
     setDeleteDialogOpen(true);
@@ -280,28 +280,28 @@ const CategoryManager = () => {
 
     try {
       await categoryService.deleteCategory(categoryToDelete.id);
-      showMessage("Xóa danh mục thành công!", "success");
+      showMessage("Category deleted successfully!", "success");
       
-      // Refresh danh sách
+      // Refresh list
       fetchCategories();
       
-      // Nếu đang xem danh mục bị xóa, clear selection
+      // If viewing deleted category, clear selection
       if (selectedCategory?.id === categoryToDelete.id) {
         setSelectedCategory(null);
       }
       
-      // Đóng dialog
+      // Close dialog
       setDeleteDialogOpen(false);
       setCategoryToDelete({ id: null, name: "" });
 
     } catch (error) {
       console.error("Error deleting category:", error);
-      showMessage(error.response?.data?.message || "Xóa danh mục thất bại! Có thể danh mục đang được sử dụng.", "error");
+      showMessage(error.response?.data?.message || "Failed to delete category! Category may be in use.", "error");
       setDeleteDialogOpen(false);
     }
   };
 
-  // CHỈNH SỬA DANH MỤC
+  // EDIT CATEGORY
   const handleEditCategory = (category) => {
     setEditingCategory(category);
     setNewCategoryName(category.name);
@@ -313,7 +313,7 @@ const CategoryManager = () => {
     e.preventDefault();
 
     if (!newCategoryName.trim() || !editingCategory) {
-      showMessage("Vui lòng nhập tên danh mục!", "error");
+      showMessage("Please enter category name!", "error");
       return;
     }
 
@@ -322,7 +322,7 @@ const CategoryManager = () => {
         name: newCategoryName.trim(),
       };
 
-      // Nếu có parentId mới
+      // If there's a new parentId
       if (parentId) {
         const parentCategory = allCategories.find(cat => cat.id === Number(parentId));
         if (parentCategory) {
@@ -330,29 +330,29 @@ const CategoryManager = () => {
           payload.categoryLevel = parentCategory.categoryLevel + 1;
           
           if (payload.categoryLevel > 3) {
-            showMessage("Không thể chuyển danh mục lên cấp 4!", "error");
+            showMessage("Cannot move category to level 4!", "error");
             return;
           }
         }
       } else {
-        // Nếu không có parentId (chuyển thành danh mục gốc)
+        // If no parentId (convert to root category)
         payload.categoryLevel = 1;
         payload.parentId = null;
       }
 
-      // Gọi API update - theo cấu trúc của service hiện tại
+      // Call update API - according to current service structure
       await categoryService.updateCategory({
         id: editingCategory.id,
         ...payload
       });
       
-      showMessage("Cập nhật danh mục thành công!", "success");
+      showMessage("Category updated successfully!", "success");
       resetForm();
       fetchCategories();
 
     } catch (error) {
       console.error("Error updating category:", error);
-      showMessage(error.response?.data?.message || "Cập nhật danh mục thất bại!", "error");
+      showMessage(error.response?.data?.message || "Failed to update category!", "error");
     }
   };
 
@@ -367,7 +367,7 @@ const CategoryManager = () => {
     setActiveTab("tree");
   };
 
-  // Tính toán thống kê
+  // Calculate statistics
   const stats = {
     total: allCategories.length,
     level1: allCategories.filter(cat => cat.categoryLevel === 1).length,
@@ -381,10 +381,10 @@ const CategoryManager = () => {
         <div className="text-center">
           <Spinner className="h-12 w-12 text-blue-500 mx-auto mb-4" />
           <Typography variant="h5" color="blue-gray" className="mb-2">
-            Đang tải danh mục...
+            Loading categories...
           </Typography>
           <Typography variant="small" color="gray">
-            Vui lòng chờ trong giây lát
+            Please wait a moment
           </Typography>
         </div>
       </div>
@@ -405,10 +405,10 @@ const CategoryManager = () => {
                 </div>
                 <div>
                   <Typography variant="h2" className="text-white font-bold mb-2">
-                    Quản lý Danh mục
+                    Category Management
                   </Typography>
                   <Typography variant="paragraph" className="text-blue-100">
-                    Tổ chức hệ thống danh mục sản phẩm
+                    Organize your product category system
                   </Typography>
                 </div>
               </div>
@@ -429,7 +429,7 @@ const CategoryManager = () => {
                     {stats.total}
                   </Typography>
                   <Typography variant="small" color="blue-gray" className="font-medium">
-                    Tổng danh mục
+                    Total Categories
                   </Typography>
                 </div>
               </div>
@@ -447,7 +447,7 @@ const CategoryManager = () => {
                     {stats.level1}
                   </Typography>
                   <Typography variant="small" color="blue-gray" className="font-medium">
-                    Danh mục cấp 1
+                    Level 1 Categories
                   </Typography>
                 </div>
               </div>
@@ -465,7 +465,7 @@ const CategoryManager = () => {
                     {stats.level2}
                   </Typography>
                   <Typography variant="small" color="blue-gray" className="font-medium">
-                    Danh mục cấp 2
+                    Level 2 Categories
                   </Typography>
                 </div>
               </div>
@@ -483,7 +483,7 @@ const CategoryManager = () => {
                     {stats.level3}
                   </Typography>
                   <Typography variant="small" color="blue-gray" className="font-medium">
-                    Danh mục cấp 3
+                    Level 3 Categories
                   </Typography>
                 </div>
               </div>
@@ -508,7 +508,7 @@ const CategoryManager = () => {
                   }`}
                 >
                   <EyeIcon className="h-4 w-4" />
-                  Xem dạng cây
+                  Tree View
                 </button>
                 <button
                   onClick={() => {
@@ -524,12 +524,12 @@ const CategoryManager = () => {
                   {/* {editingCategory ? (
                     <>
                       <PencilIcon className="h-4 w-4" />
-                      Chỉnh sửa
+                      Edit
                     </>
                   ) : (
                     <>
                       <PlusIcon className="h-4 w-4" />
-                      Tạo mới
+                      Create New
                     </>
                   )} */}
                 </button>
@@ -546,7 +546,7 @@ const CategoryManager = () => {
                 <div className="flex items-center justify-between mb-6">
                   <Typography variant="h5" color="blue-gray" className="flex items-center gap-2">
                     <CubeIcon className="h-5 w-5 text-blue-500" />
-                    Cấu trúc danh mục
+                    Category Structure
                   </Typography>
                 </div>
 
@@ -568,10 +568,10 @@ const CategoryManager = () => {
                     <div className="text-center py-12">
                       <InformationCircleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                       <Typography variant="h6" color="gray" className="mb-2">
-                        Chưa có danh mục nào
+                        No categories yet
                       </Typography>
                       <Typography variant="small" color="gray">
-                        Hãy tạo danh mục đầu tiên của bạn
+                        Create your first category
                       </Typography>
                     </div>
                   )}
@@ -587,7 +587,7 @@ const CategoryManager = () => {
               <CardBody className="p-6">
                 <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center gap-2">
                   <InformationCircleIcon className="h-5 w-5 text-blue-500" />
-                  Chi tiết danh mục
+                  Category Details
                 </Typography>
                 
                 {selectedCategory ? (
@@ -603,10 +603,10 @@ const CategoryManager = () => {
                       </div>
                       <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                         <Typography variant="small" color="blue-gray" className="font-medium">
-                          Cấp độ
+                          Level
                         </Typography>
                         <Chip
-                          value={`Cấp ${selectedCategory.categoryLevel}`}
+                          value={`Level ${selectedCategory.categoryLevel}`}
                           color="green"
                           size="sm"
                           className="font-bold"
@@ -616,7 +616,7 @@ const CategoryManager = () => {
                     
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                       <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                        Tên danh mục
+                        Category Name
                       </Typography>
                       <Typography variant="h6" color="blue-gray" className="font-bold">
                         {selectedCategory.name}
@@ -625,12 +625,12 @@ const CategoryManager = () => {
                     
                     <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                       <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                        Danh mục cha
+                        Parent Category
                       </Typography>
                       <Typography variant="h6" color="blue-gray" className="font-bold">
                         {selectedCategory.parentId 
-                          ? allCategories.find(cat => cat.id === selectedCategory.parentId)?.name || "Đang tải..."
-                          : "Không có (Danh mục gốc)"
+                          ? allCategories.find(cat => cat.id === selectedCategory.parentId)?.name || "Loading..."
+                          : "None (Root Category)"
                         }
                       </Typography>
                     </div>
@@ -638,7 +638,7 @@ const CategoryManager = () => {
                     <div>
                       <Typography variant="h6" color="blue-gray" className="mb-3 flex items-center gap-2">
                         <TagIcon className="h-4 w-4 text-blue-500" />
-                        Danh mục con
+                        Subcategories
                       </Typography>
                       <CategoryChildren node={selectedCategory} onDelete={handleDeleteCategory} onEdit={handleEditCategory} />
                     </div>
@@ -647,10 +647,10 @@ const CategoryManager = () => {
                   <div className="text-center py-8">
                     <InformationCircleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <Typography variant="h6" color="gray" className="mb-2">
-                      Chưa chọn danh mục
+                      No category selected
                     </Typography>
                     <Typography variant="small" color="gray">
-                      Chọn một danh mục để xem chi tiết
+                      Select a category to view details
                     </Typography>
                   </div>
                 )}
@@ -664,12 +664,12 @@ const CategoryManager = () => {
                   {editingCategory ? (
                     <>
                       <PencilIcon className="h-5 w-5 text-blue-500" />
-                      Chỉnh sửa danh mục
+                      Edit Category
                     </>
                   ) : (
                     <>
                       <PlusIcon className="h-5 w-5 text-green-500" />
-                      Tạo danh mục mới
+                      Create New Category
                     </>
                   )}
                 </Typography>
@@ -677,13 +677,13 @@ const CategoryManager = () => {
                 <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
                   <div>
                     <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                      Tên danh mục
+                      Category Name
                     </Typography>
                     <Input
                       type="text"
                       value={newCategoryName}
                       onChange={(e) => setNewCategoryName(e.target.value)}
-                      placeholder="Nhập tên danh mục..."
+                      placeholder="Enter category name..."
                       className="!border !border-gray-300 focus:!border-blue-500"
                       required
                     />
@@ -691,28 +691,28 @@ const CategoryManager = () => {
                   
                   <div>
                     <Typography variant="small" color="blue-gray" className="font-medium mb-2">
-                      Danh mục cha
+                      Parent Category
                     </Typography>
                     <select
                       value={parentId}
                       onChange={(e) => setParentId(e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
-                      <option value="">-- Không có (Tạo danh mục gốc) --</option>
+                      <option value="">-- None (Create Root Category) --</option>
                       {allCategories
                         .filter((cat) => cat.categoryLevel < 3)
-                        .filter((cat) => !editingCategory || cat.id !== editingCategory.id) // Không cho chọn chính nó
+                        .filter((cat) => !editingCategory || cat.id !== editingCategory.id) // Don't allow selecting itself
                         .map((cat) => (
                           <option key={cat.id} value={cat.id}>
-                            {cat.name} (Cấp {cat.categoryLevel})
+                            {cat.name} (Level {cat.categoryLevel})
                           </option>
                         ))
                       }
                     </select>
                     <Typography variant="small" color="gray" className="mt-1">
                       {editingCategory 
-                        ? "Chọn danh mục cha mới (không chọn để giữ nguyên)"
-                        : "Để trống để tạo danh mục gốc (cấp 1)"
+                        ? "Select new parent category (leave empty to keep current)"
+                        : "Leave empty to create root category (level 1)"
                       }
                     </Typography>
                   </div>
@@ -727,7 +727,7 @@ const CategoryManager = () => {
                         className="flex-1 flex items-center justify-center gap-2"
                       >
                         <XMarkIcon className="h-4 w-4" />
-                        Hủy
+                        Cancel
                       </Button>
                     )}
                     <Button
@@ -738,12 +738,12 @@ const CategoryManager = () => {
                       {editingCategory ? (
                         <>
                           <CheckIcon className="h-4 w-4" />
-                          Cập nhật
+                          Update
                         </>
                       ) : (
                         <>
                           <PlusIcon className="h-4 w-4" />
-                          Tạo danh mục
+                          Create Category
                         </>
                       )}
                     </Button>
@@ -769,18 +769,18 @@ const CategoryManager = () => {
         <Dialog open={deleteDialogOpen} handler={setDeleteDialogOpen}>
           <DialogHeader className="flex items-center gap-2">
             <TrashIcon className="h-5 w-5 text-red-500" />
-            Xác nhận xóa danh mục
+            Confirm Category Deletion
           </DialogHeader>
           <DialogBody>
             <Typography variant="paragraph" className="mb-4">
-              Bạn có chắc chắn muốn xóa danh mục <strong>"{categoryToDelete.name}"</strong> không?
+              Are you sure you want to delete the category <strong>"{categoryToDelete.name}"</strong>?
             </Typography>
             <Alert color="red" className="mb-4">
               <Typography variant="small" className="font-bold">
-                CẢNH BÁO:
+                WARNING:
               </Typography>
               <Typography variant="small">
-                Hành động này sẽ xóa vĩnh viễn danh mục và tất cả danh mục con của nó!
+                This action will permanently delete the category and all its subcategories!
               </Typography>
             </Alert>
           </DialogBody>
@@ -794,7 +794,7 @@ const CategoryManager = () => {
               }}
               className="mr-2"
             >
-              Hủy
+              Cancel
             </Button>
             <Button
               variant="gradient"
@@ -803,7 +803,7 @@ const CategoryManager = () => {
               className="flex items-center gap-2"
             >
               <TrashIcon className="h-4 w-4" />
-              Xóa
+              Delete
             </Button>
           </DialogFooter>
         </Dialog>
