@@ -1,7 +1,4 @@
 import axios from "axios";
-import Cookies from "universal-cookie";
-
-const cookies = new Cookies();
 
 const baseApi = axios.create({
   baseURL: "http://localhost:8080/api/v1",
@@ -10,10 +7,9 @@ const baseApi = axios.create({
   },
 });
 
-
 baseApi.interceptors.request.use(
   (config) => {
-    const token = cookies.get("token");
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
