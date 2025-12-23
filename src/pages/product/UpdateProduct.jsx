@@ -975,7 +975,7 @@ const UpdateProduct = () => {
                         <FolderIcon className="h-5 w-5" />
                         Categories
                       </Typography>
-                      <Button
+                      {/* <Button
                         size="sm"
                         variant="outlined"
                         color="blue"
@@ -984,7 +984,7 @@ const UpdateProduct = () => {
                       >
                         <PlusIcon className="h-4 w-4" />
                         Add Category
-                      </Button>
+                      </Button> */}
                     </div>
 
                     {fetchingCategories ? (
@@ -1064,7 +1064,7 @@ const UpdateProduct = () => {
                         <TagIcon className="h-5 w-5" />
                         Tags
                       </Typography>
-                      <Button
+                      {/* <Button
                         size="sm"
                         variant="outlined"
                         color="green"
@@ -1073,7 +1073,7 @@ const UpdateProduct = () => {
                       >
                         <PlusIcon className="h-4 w-4" />
                         Add Tag
-                      </Button>
+                      </Button> */}
                     </div>
 
                     {fetchingTags ? (
