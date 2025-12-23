@@ -27,7 +27,7 @@ function CustomerManager() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
 
-  // Fetch danh sách user
+  // Fetch user list
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -36,13 +36,13 @@ function CustomerManager() {
       setUsers(data);
     } catch (err) {
       console.error(err);
-      setError("Lỗi khi tải danh sách người dùng.");
+      setError("Error loading user list.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Toggle khoá / mở với xác nhận
+  // Toggle lock / unlock with confirmation
   const handleToggleLock = async (user) => {
     setSelectedUser(user);
     setShowDialog(true);
@@ -55,27 +55,27 @@ function CustomerManager() {
       setUpdatingId(selectedUser.id);
       const currentStatus = selectedUser.locked === true;
       await cmsUserService.updateCmsUserStatus(selectedUser.id, !currentStatus);
-      await fetchUsers(); // reload danh sách
+      await fetchUsers(); // reload list
       setShowDialog(false);
       setSelectedUser(null);
     } catch (err) {
       console.error(err);
-      setError("Không thể cập nhật trạng thái user.");
+      setError("Unable to update user status.");
     } finally {
       setUpdatingId(null);
     }
   };
 
-  // Hàm hiển thị trạng thái
+  // Status display function
   const renderStatus = (locked) => {
     if (locked === true) {
-      return <Chip value="Đã khóa" color="red" size="sm" className="font-medium" />;
+      return <Chip value="Locked" color="red" size="sm" className="font-medium" />;
     } else {
-      return <Chip value="Đang hoạt động" color="green" size="sm" className="font-medium" />;
+      return <Chip value="Active" color="green" size="sm" className="font-medium" />;
     }
   };
 
-  // Hàm hiển thị nút hành động
+  // Action button display function
   const renderActionButton = (user) => {
     const { id, locked } = user;
     const isLocked = locked === true;
@@ -96,21 +96,21 @@ function CustomerManager() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
             </svg>
-            Mở khóa
+            Unlock
           </>
         ) : (
           <>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zM7 7v2h6V7a3 3 0 00-6 0z" clipRule="evenodd" />
             </svg>
-            Khóa
+            Lock
           </>
         )}
       </Button>
     );
   };
 
-  // Lọc users theo search term
+  // Filter users by search term
   const filteredUsers = useMemo(() => {
     if (!searchTerm.trim()) return users;
     
@@ -125,7 +125,7 @@ function CustomerManager() {
     );
   }, [users, searchTerm]);
 
-  // Thống kê
+  // Statistics
   const stats = useMemo(() => {
     const total = users.length;
     const active = users.filter(user => user.locked !== true).length;
@@ -144,21 +144,21 @@ function CustomerManager() {
         {/* Header */}
         <div className="mb-8">
           <Typography variant="h3" color="blue-gray" className="mb-2 font-bold">
-            Quản lý Khách hàng
+            Customer Management
           </Typography>
           <Typography variant="paragraph" color="gray" className="text-lg">
-            Quản lý và theo dõi trạng thái tài khoản người dùng
+            Manage and track user account status
           </Typography>
         </div>
 
-        {/* Thống kê */}
+        {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg">
             <CardBody className="p-6">
               <div className="flex justify-between items-center">
                 <div>
                   <Typography variant="h6" className="mb-2 opacity-80">
-                    Tổng số người dùng
+                    Total Users
                   </Typography>
                   <Typography variant="h3" className="font-bold">
                     {stats.total}
@@ -178,7 +178,7 @@ function CustomerManager() {
               <div className="flex justify-between items-center">
                 <div>
                   <Typography variant="h6" className="mb-2 opacity-80">
-                    Đang hoạt động
+                    Active
                   </Typography>
                   <Typography variant="h3" className="font-bold">
                     {stats.active}
@@ -198,7 +198,7 @@ function CustomerManager() {
               <div className="flex justify-between items-center">
                 <div>
                   <Typography variant="h6" className="mb-2 opacity-80">
-                    Đã khóa
+                    Locked
                   </Typography>
                   <Typography variant="h3" className="font-bold">
                     {stats.locked}
@@ -214,13 +214,13 @@ function CustomerManager() {
           </Card>
         </div>
 
-        {/* Thanh tìm kiếm và điều khiển */}
+        {/* Search and controls bar */}
         <Card className="shadow-lg border-0 mb-6">
           <CardBody className="p-6">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
               <div className="flex-1 w-full md:w-auto">
                 <Input
-                  label="Tìm kiếm người dùng..."
+                  label="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   icon={
@@ -241,7 +241,7 @@ function CustomerManager() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  Làm mới
+                  Refresh
                 </Button>
                 {searchTerm && (
                   <Button 
@@ -253,7 +253,7 @@ function CustomerManager() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Xóa tìm kiếm
+                    Clear Search
                   </Button>
                 )}
               </div>
@@ -266,7 +266,7 @@ function CustomerManager() {
             <div className="text-center">
               <Spinner className="h-12 w-12 mb-4" />
               <Typography variant="h6" color="gray">
-                Đang tải dữ liệu...
+                Loading data...
               </Typography>
             </div>
           </div>
@@ -293,11 +293,11 @@ function CustomerManager() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <Typography variant="h5" color="white" className="mb-1">
-                    Danh sách Người dùng
+                    User List
                   </Typography>
                   <Typography variant="small" color="blue-gray-100">
-                    Hiển thị {filteredUsers.length} trong tổng số {users.length} người dùng
-                    {searchTerm && ` - Tìm kiếm: "${searchTerm}"`}
+                    Showing {filteredUsers.length} out of {users.length} users
+                    {searchTerm && ` - Search: "${searchTerm}"`}
                   </Typography>
                 </div>
               </div>
@@ -313,12 +313,12 @@ function CustomerManager() {
                     </th>
                     <th className="p-4 border-b border-blue-gray-100">
                       <Typography variant="small" color="blue-gray" className="font-bold leading-none">
-                        Tên đăng nhập
+                        Username
                       </Typography>
                     </th>
                     <th className="p-4 border-b border-blue-gray-100">
                       <Typography variant="small" color="blue-gray" className="font-bold leading-none">
-                        Họ và tên
+                        Full Name
                       </Typography>
                     </th>
                     <th className="p-4 border-b border-blue-gray-100">
@@ -328,17 +328,17 @@ function CustomerManager() {
                     </th>
                     <th className="p-4 border-b border-blue-gray-100">
                       <Typography variant="small" color="blue-gray" className="font-bold leading-none">
-                        Số điện thoại
+                        Phone Number
                       </Typography>
                     </th>
                     <th className="p-4 border-b border-blue-gray-100">
                       <Typography variant="small" color="blue-gray" className="font-bold leading-none">
-                        Trạng thái
+                        Status
                       </Typography>
                     </th>
                     <th className="p-4 border-b border-blue-gray-100">
                       <Typography variant="small" color="blue-gray" className="font-bold leading-none">
-                        Hành động
+                        Action
                       </Typography>
                     </th>
                   </tr>
@@ -374,7 +374,7 @@ function CustomerManager() {
                       <td className="p-4 border-b border-blue-gray-50">
                         <Typography variant="small" color="blue-gray" className="font-normal">
                           {user.primaryPhone || (
-                            <span className="text-gray-400 italic">Chưa cập nhật</span>
+                            <span className="text-gray-400 italic">Not updated</span>
                           )}
                         </Typography>
                       </td>
@@ -399,13 +399,13 @@ function CustomerManager() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <Typography variant="h5" color="gray" className="mb-2">
-                Không tìm thấy kết quả
+                No results found
               </Typography>
               <Typography variant="paragraph" color="gray" className="mb-4">
-                {`Không có người dùng nào phù hợp với từ khóa "${searchTerm}"`}
+                {`No users match the keyword "${searchTerm}"`}
               </Typography>
               <Button variant="gradient" color="blue" onClick={() => setSearchTerm("")}>
-                Xóa tìm kiếm
+                Clear Search
               </Button>
             </CardBody>
           </Card>
@@ -418,38 +418,38 @@ function CustomerManager() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
               </svg>
               <Typography variant="h5" color="gray" className="mb-2">
-                Không có người dùng nào
+                No users available
               </Typography>
               <Typography variant="paragraph" color="gray" className="mb-4">
-                Hiện tại không có người dùng nào trong hệ thống.
+                There are currently no users in the system.
               </Typography>
               <Button variant="gradient" color="blue" onClick={fetchUsers}>
-                Thử lại
+                Try Again
               </Button>
             </CardBody>
           </Card>
         )}
       </div>
 
-      {/* Dialog xác nhận */}
+      {/* Confirmation dialog */}
       <Dialog open={showDialog} handler={setShowDialog}>
         <DialogHeader>
-          {selectedUser && (selectedUser.locked === true ? "Mở khóa" : "Khóa")} người dùng
+          {selectedUser && (selectedUser.locked === true ? "Unlock" : "Lock")} user
         </DialogHeader>
         <DialogBody>
           {selectedUser && (
             <div className="space-y-4">
               <Typography variant="paragraph">
-                Bạn có chắc chắn muốn {selectedUser.locked === true ? "mở khóa" : "khóa"} người dùng này?
+                Are you sure you want to {selectedUser.locked === true ? "unlock" : "lock"} this user?
               </Typography>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <Typography variant="small" className="font-semibold">
-                  Thông tin người dùng:
+                  User Information:
                 </Typography>
                 <div className="mt-2 space-y-1">
                   <Typography variant="small">ID: {selectedUser.id}</Typography>
-                  <Typography variant="small">Tên đăng nhập: {selectedUser.username}</Typography>
-                  <Typography variant="small">Họ tên: {selectedUser.firstName} {selectedUser.lastName}</Typography>
+                  <Typography variant="small">Username: {selectedUser.username}</Typography>
+                  <Typography variant="small">Full Name: {selectedUser.firstName} {selectedUser.lastName}</Typography>
                   <Typography variant="small">Email: {selectedUser.email}</Typography>
                 </div>
               </div>
@@ -463,7 +463,7 @@ function CustomerManager() {
             onClick={() => setShowDialog(false)}
             className="mr-1"
           >
-            <span>Hủy</span>
+            <span>Cancel</span>
           </Button>
           <Button
             variant="gradient"
@@ -474,7 +474,7 @@ function CustomerManager() {
             {updatingId === selectedUser?.id ? (
               <Spinner className="h-4 w-4" />
             ) : (
-              <span>Xác nhận</span>
+              <span>Confirm</span>
             )}
           </Button>
         </DialogFooter>

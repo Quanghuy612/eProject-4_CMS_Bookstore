@@ -11,6 +11,8 @@ import {
   UsersIcon,
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
+  ChatBubbleLeftRightIcon, // Thêm icon cho feedback
+  ClockIcon, // Thêm icon cho time clock
 } from "@heroicons/react/24/solid"; 
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import ProductCreate from "./pages/product/ProductCreate";
@@ -21,6 +23,7 @@ import TagManager from "./pages/tag/TagManager";
 import OrderDetail from "./pages/order/OrderDetail";
 import OrderList from "./pages/order/OrderList";
 import CustomerManager from "./pages/customer/CustomerManager";
+import FeedbackManager from "./pages/feedback/FeedbackManager";
 import { SignIn } from "@/pages/auth";
 import NotFound from "./pages/404/NotFound";
 
@@ -34,7 +37,7 @@ export const routes = [
     pages: [
       {
         icon: <HomeIcon {...icon} />,
-        name: "Home",
+        name: "Dashboard",
         path: "/home",
         element: <Home />,
       },
@@ -93,17 +96,23 @@ export const routes = [
         element: <CustomerManager />,
       },
       {
-        icon: <TableCellsIcon {...icon} />,
-        name: "Time Clock",
+        icon: <ChatBubbleLeftRightIcon {...icon} />, // Icon phù hợp cho feedback
+        name: "Feedback Management",
+        path: "/feedback",
+        element: <FeedbackManager />,
+      },
+      {
+        icon: <ClockIcon {...icon} />, // Icon phù hợp cho time clock
+        name: "Time",
         path: "/tables",
         element: <Tables />,
       },
-      {
-        icon: <InformationCircleIcon {...icon} />,
-        name: "Notifications",
-        path: "/notifications",
-        element: <Notifications />,
-      },
+      // {
+      //   icon: <InformationCircleIcon {...icon} />,
+      //   name: "Notifications",
+      //   path: "/notifications",
+      //   element: <Notifications />,
+      // },
     ],
   },
   {
