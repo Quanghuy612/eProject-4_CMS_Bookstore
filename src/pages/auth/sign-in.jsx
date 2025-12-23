@@ -33,8 +33,10 @@ const handleSubmit = async (e) => {
     } else if (decodedToken?.role === "BASIC_USER") {
       setErrorMessage("You do not have permission to access this page.");
       loginService.logout(); 
+      navigator("/auth/404");
     } else {
       setErrorMessage("Invalid role or no permission.");
+      navigator("/auth/404");
       loginService.logout();
     }
   } catch (error) {
