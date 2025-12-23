@@ -6,7 +6,7 @@ const api = baseApi;
 // Lấy danh sách user
 const getAllCmsUsers = async () => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/v1/cms/user`);
+    const response = await api.get(`/cms/user`);
     return response.data;
   } catch (error) {
     console.error("Error fetching CMS users:", error);
@@ -17,7 +17,7 @@ const getAllCmsUsers = async () => {
 // Khóa / mở khóa user
 const updateCmsUserStatus = async (id, locked) => {
   try {
-    const response = await axios.put(`http://localhost:8080/api/v1/cms/user/${id}/status`, {
+    const response = await api.put(`/cms/user/${id}/status`, {
       locked,
     });
     return response.data;
