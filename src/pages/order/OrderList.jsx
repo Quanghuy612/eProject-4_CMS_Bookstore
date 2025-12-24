@@ -166,6 +166,19 @@ export function OrderList() {
     }
   };
 
+  // Hàm kiểm tra logic chuyển đổi trạng thái
+  const canChangeStatus = (currentStatus, newStatus) => {
+    // Logic chuyển đổi trạng thái hợp lệ
+    const allowedTransitions = {
+      PENDING: ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED: ['COMPLETED', 'CANCELLED'],
+      COMPLETED: [], // Không thể chuyển từ COMPLETED sang trạng thái khác
+      CANCELLED: []  // Không thể chuyển từ CANCELLED sang trạng thái khác
+    };
+
+    return allowedTransitions[currentStatus]?.includes(newStatus) || false;
+  };
+
   const getStatusColor = (status) => {
     const statusMap = {
       PENDING: "amber",
@@ -197,9 +210,9 @@ export function OrderList() {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'VND'
+      currency: 'USD'
     }).format(amount);
   };
 
@@ -215,25 +228,49 @@ export function OrderList() {
 
   // Function to update status
   const handleUpdateStatus = async (orderId, newStatus) => {
+    const order = orders.find(o => o.id === orderId);
+
+    if (!order) {
+      console.log("Order not found");
+      return;
+    }
+
+    // Kiểm tra logic chuyển đổi
+    if (!canChangeStatus(order.status, newStatus)) {
+      const currentStatusText = getStatusText(order.status);
+      const newStatusText = getStatusText(newStatus);
+      console.log(
+        `Cannot change order status from "${currentStatusText}" to "${newStatusText}"\n\n` +
+        `Valid transitions:\n` +
+        `• PENDING → CONFIRMED, CANCELLED\n` +
+        `• CONFIRMED → COMPLETED, CANCELLED\n` +
+        `• COMPLETED → (No further changes)\n` +
+        `• CANCELLED → (No further changes)`
+      );
+      return;
+    }
+
+    // Xác nhận trước khi thay đổi
+    if (!window.confirm(`Are you sure you want to change order status from "${getStatusText(order.status)}" to "${getStatusText(newStatus)}"?`)) {
+      return;
+    }
+
     try {
       setUpdatingId(orderId);
-      
-      console.log(`Updating order ${orderId} status to ${newStatus}`);
       await OrderService.updateOrderStatus(orderId, newStatus);
-      
-      // Update status in state
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.id === orderId 
-            ? { ...order, status: newStatus }
-            : order
+
+      // Cập nhật state
+      setOrders(prev =>
+        prev.map(o =>
+          o.id === orderId ? { ...o, status: newStatus } : o
         )
       );
-      
-      console.log('Status updated successfully');
+
+      // Hiển thị thông báo thành công
+      alert(`✅ Order status updated successfully!\nFrom: ${getStatusText(order.status)}\nTo: ${getStatusText(newStatus)}`);
     } catch (err) {
-      console.error("Error updating status:", err);
-      alert(`Error updating status: ${err.message}`);
+      console.error("Update status failed:", err);
+      alert(`❌ Update status failed: ${err.response?.data?.message || err.message || "Unknown error"}`);
     } finally {
       setUpdatingId(null);
     }
@@ -249,85 +286,71 @@ export function OrderList() {
   // Render quick update buttons based on current status
   const renderQuickActionButtons = (order) => {
     const { id, status } = order;
-    
-    switch(status) {
-      case 'PENDING':
-        return (
-          <div className="flex gap-1">
-            <Tooltip content="Confirm order">
-              <IconButton
-                color="blue"
-                size="sm"
-                variant="gradient"
-                onClick={() => handleUpdateStatus(id, 'CONFIRMED')}
-                disabled={updatingId === id}
-              >
-                <CheckCircleIcon className="h-4 w-4" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip content="Cancel order">
-              <IconButton
-                color="red"
-                size="sm"
-                variant="gradient"
-                onClick={() => handleUpdateStatus(id, 'CANCELLED')}
-                disabled={updatingId === id}
-              >
-                <XCircleIcon className="h-4 w-4" />
-              </IconButton>
-            </Tooltip>
-          </div>
-        );
-      
-      case 'CONFIRMED':
-        return (
-          <div className="flex gap-1">
-            <Tooltip content="Complete order">
-              <IconButton
-                color="green"
-                size="sm"
-                variant="gradient"
-                onClick={() => handleUpdateStatus(id, 'COMPLETED')}
-                disabled={updatingId === id}
-              >
-                <CheckCircleIcon className="h-4 w-4" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip content="Cancel order">
-              <IconButton
-                color="red"
-                size="sm"
-                variant="gradient"
-                onClick={() => handleUpdateStatus(id, 'CANCELLED')}
-                disabled={updatingId === id}
-              >
-                <XCircleIcon className="h-4 w-4" />
-              </IconButton>
-            </Tooltip>
-          </div>
-        );
-      
-      case 'COMPLETED':
-        return (
-          <Chip
-            color="green"
-            value="Completed"
-            className="px-3 py-1"
-          />
-        );
-      
-      case 'CANCELLED':
-        return (
-          <Chip
-            color="red"
-            value="Cancelled"
-            className="px-3 py-1"
-          />
-        );
-      
-      default:
-        return null;
+
+    // Chỉ hiển thị nút cho trạng thái có thể thay đổi
+    if (status === "COMPLETED" || status === "CANCELLED") {
+      return (
+        <Chip 
+          color={status === "COMPLETED" ? "green" : "red"} 
+          value={status === "COMPLETED" ? "Completed" : "Cancelled"}
+          icon={status === "COMPLETED" ? <CheckCircleIcon className="h-4 w-4" /> : <XCircleIcon className="h-4 w-4" />}
+        />
+      );
     }
+
+    // PENDING chỉ có thể chuyển sang CONFIRMED hoặc CANCELLED
+    if (status === "PENDING") {
+      return (
+        <div className="flex gap-1">
+          <Tooltip content="Confirm order">
+            <IconButton
+              color="green"
+              size="sm"
+              onClick={() => handleUpdateStatus(id, "CONFIRMED")}
+            >
+              <CheckCircleIcon className="h-4 w-4" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip content="Cancel order">
+            <IconButton
+              color="red"
+              size="sm"
+              onClick={() => handleUpdateStatus(id, "CANCELLED")}
+            >
+              <XCircleIcon className="h-4 w-4" />
+            </IconButton>
+          </Tooltip>
+        </div>
+      );
+    }
+
+    // CONFIRMED chỉ có thể chuyển sang COMPLETED hoặc CANCELLED
+    if (status === "CONFIRMED") {
+      return (
+        <div className="flex gap-1">
+          <Tooltip content="Mark as completed">
+            <IconButton
+              color="green"
+              size="sm"
+              onClick={() => handleUpdateStatus(id, "COMPLETED")}
+            >
+              <CheckCircleIcon className="h-4 w-4" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip content="Cancel order">
+            <IconButton
+              color="red"
+              size="sm"
+              onClick={() => handleUpdateStatus(id, "CANCELLED")}
+            >
+              <XCircleIcon className="h-4 w-4" />
+            </IconButton>
+          </Tooltip>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   // Get current sort label
@@ -338,6 +361,24 @@ export function OrderList() {
   // Get current sort icon
   const getCurrentSortIcon = () => {
     return SORT_OPTIONS.find(option => option.value === sortOrder)?.icon || <ChevronDownIcon className="h-4 w-4" />;
+  };
+
+  // Helper function for text colors
+  const getStatusTextColor = (status) => {
+    const colorMap = {
+      PENDING: "text-amber-700",
+      CONFIRMED: "text-blue-700",
+      COMPLETED: "text-green-700",
+      CANCELLED: "text-red-700"
+    };
+    return colorMap[status] || "text-gray-700";
+  };
+
+  // Helper function for disabled status style
+  const getDisabledStatusStyle = (status) => {
+    return status === "COMPLETED" || status === "CANCELLED" 
+      ? "opacity-70 cursor-not-allowed" 
+      : "";
   };
 
   // ✅ If route is /create or /:id → render Outlet (child routes)
@@ -844,7 +885,7 @@ export function OrderList() {
                               <div className={`h-3 w-3 rounded-full bg-${getStatusColor(order.status)}-500`}></div>
                               <Typography 
                                 variant="small" 
-                                className={`font-medium text-${getStatusColor(order.status)}-700`}
+                                className={getStatusTextColor(order.status)}
                               >
                                 {getStatusText(order.status)}
                               </Typography>
@@ -872,16 +913,34 @@ export function OrderList() {
                                       label="Select status"
                                       value={order.status}
                                       onChange={(value) => handleUpdateStatus(order.id, value)}
-                                      disabled={isUpdating}
+                                      disabled={isUpdating || order.status === "COMPLETED" || order.status === "CANCELLED"}
                                     >
-                                      {STATUS_OPTIONS.filter(option => option.value !== 'ALL').map(option => (
-                                        <Option 
-                                          key={option.value} 
-                                          value={option.value}
-                                          className={`text-${option.color}-700`}
-                                        >
-                                          {option.label}
-                                        </Option>
+                                      <Option 
+                                        value={order.status}
+                                        className={getStatusTextColor(order.status)}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <div className={`h-2 w-2 rounded-full bg-${getStatusColor(order.status)}-500`}></div>
+                                          <span>Current: {getStatusText(order.status)}</span>
+                                        </div>
+                                      </Option>
+                                      {STATUS_OPTIONS
+                                        .filter(option => 
+                                          option.value !== 'ALL' && 
+                                          option.value !== order.status &&
+                                          canChangeStatus(order.status, option.value)
+                                        )
+                                        .map(option => (
+                                          <Option 
+                                            key={option.value} 
+                                            value={option.value}
+                                            className={getStatusTextColor(option.value)}
+                                          >
+                                            <div className="flex items-center gap-2">
+                                              <div className={`h-2 w-2 rounded-full bg-${option.color}-500`}></div>
+                                              <span>Change to: {option.label}</span>
+                                            </div>
+                                          </Option>
                                       ))}
                                     </Select>
                                   </div>

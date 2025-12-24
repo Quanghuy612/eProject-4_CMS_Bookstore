@@ -59,6 +59,17 @@ export function OrderDetail() {
     }
   };
 
+  // Hàm kiểm tra logic chuyển đổi trạng thái
+  const canChangeStatus = (currentStatus, newStatus) => {
+    const allowedTransitions = {
+      PENDING: ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED: ['COMPLETED', 'CANCELLED'],
+      COMPLETED: [],
+      CANCELLED: []
+    };
+    return allowedTransitions[currentStatus]?.includes(newStatus) || false;
+  };
+
   const STATUS_OPTIONS = [
     { value: 'PENDING', label: 'Pending confirmation', color: 'amber' },
     { value: 'CONFIRMED', label: 'Confirmed', color: 'blue' },
@@ -97,10 +108,9 @@ export function OrderDetail() {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return "0 ₫";
-    return new Intl.NumberFormat('vi-VN', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'VND'
+      currency: 'USD'
     }).format(amount);
   };
 
@@ -117,23 +127,52 @@ export function OrderDetail() {
   };
 
   const handleUpdateStatus = async (newStatus) => {
-    if (order.status === newStatus) return;
+    if (!order) return;
     
+    // Kiểm tra nếu trạng thái hiện tại giống trạng thái mới
+    if (order.status === newStatus) {
+      alert(`Order status is already "${getStatusText(newStatus)}"`);
+      return;
+    }
+
+    // Kiểm tra logic chuyển đổi
+    if (!canChangeStatus(order.status, newStatus)) {
+      const currentStatusText = getStatusText(order.status);
+      const newStatusText = getStatusText(newStatus);
+      alert(
+        `❌ Cannot change order status from "${currentStatusText}" to "${newStatusText}"\n\n` +
+        `Valid transitions:\n` +
+        `• PENDING → CONFIRMED, CANCELLED\n` +
+        `• CONFIRMED → COMPLETED, CANCELLED\n` +
+        `• COMPLETED → (No further changes)\n` +
+        `• CANCELLED → (No further changes)`
+      );
+      return;
+    }
+
+    // Xác nhận trước khi thay đổi
+    const confirmMessage = `Are you sure you want to change order status from "${getStatusText(order.status)}" to "${getStatusText(newStatus)}"?`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
     try {
       setUpdatingStatus(true);
       console.log(`Updating order ${id} status to ${newStatus}`);
       
       await OrderService.updateOrderStatus(id, newStatus);
       
+      // Cập nhật state
       setOrder(prev => ({
         ...prev,
         status: newStatus
       }));
       
-      console.log('Status updated successfully');
+      // Hiển thị thông báo thành công
+      alert(`✅ Order status updated successfully!\nFrom: ${getStatusText(order.status)}\nTo: ${getStatusText(newStatus)}`);
     } catch (err) {
       console.error("Error updating status:", err);
-      alert(`Error updating status: ${err.message}`);
+      alert(`❌ Update status failed: ${err.response?.data?.message || err.message || "Unknown error"}`);
     } finally {
       setUpdatingStatus(false);
     }
@@ -144,102 +183,99 @@ export function OrderDetail() {
     
     const { status } = order;
     
-    switch(status) {
-      case 'PENDING':
-        return (
-          <div className="space-y-2">
-            <Button
-              color="blue"
-              fullWidth
-              onClick={() => handleUpdateStatus('CONFIRMED')}
-              disabled={updatingStatus}
-              className="flex items-center justify-center gap-2"
-            >
-              <CheckCircleIcon className="h-5 w-5" />
-              Confirm order
-            </Button>
-            <Button
-              color="red"
-              variant="outlined"
-              fullWidth
-              onClick={() => {
-                if (window.confirm("Are you sure you want to cancel this order?")) {
-                  handleUpdateStatus('CANCELLED');
-                }
-              }}
-              disabled={updatingStatus}
-              className="flex items-center justify-center gap-2"
-            >
-              <XCircleIcon className="h-5 w-5" />
-              Cancel order
-            </Button>
-          </div>
-        );
-      
-      case 'CONFIRMED':
-        return (
-          <div className="space-y-2">
-            <Button
-              color="green"
-              fullWidth
-              onClick={() => handleUpdateStatus('COMPLETED')}
-              disabled={updatingStatus}
-              className="flex items-center justify-center gap-2"
-            >
-              <CheckCircleIcon className="h-5 w-5" />
-              Mark as completed
-            </Button>
-            <Button
-              color="red"
-              variant="outlined"
-              fullWidth
-              onClick={() => {
-                if (window.confirm("Are you sure you want to cancel this order?")) {
-                  handleUpdateStatus('CANCELLED');
-                }
-              }}
-              disabled={updatingStatus}
-              className="flex items-center justify-center gap-2"
-            >
-              <XCircleIcon className="h-5 w-5" />
-              Cancel order
-            </Button>
-          </div>
-        );
-      
-      case 'COMPLETED':
-        return (
-          <div className="text-center py-4">
+    // Nếu đã hoàn thành hoặc đã hủy, hiển thị thông báo
+    if (status === 'COMPLETED' || status === 'CANCELLED') {
+      const isCompleted = status === 'COMPLETED';
+      return (
+        <div className="text-center py-4">
+          {isCompleted ? (
             <CheckCircleIcon className="h-12 w-12 text-green-500 mx-auto mb-2" />
-            <Typography variant="h6" color="green">
-              Order completed
-            </Typography>
-            <Typography variant="small" color="gray">
-              Status cannot be changed
-            </Typography>
-          </div>
-        );
-      
-      case 'CANCELLED':
-        return (
-          <div className="text-center py-4">
+          ) : (
             <XCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-2" />
-            <Typography variant="h6" color="red">
-              Order cancelled
-            </Typography>
-            <Typography variant="small" color="gray">
-              Status cannot be changed
-            </Typography>
-          </div>
-        );
-      
-      default:
-        return null;
+          )}
+          <Typography variant="h6" color={isCompleted ? "green" : "red"}>
+            Order {isCompleted ? "completed" : "cancelled"}
+          </Typography>
+          <Typography variant="small" color="gray">
+            Status cannot be changed
+          </Typography>
+        </div>
+      );
     }
+
+    // Hiển thị nút hành động hợp lệ
+    if (status === 'PENDING') {
+      return (
+        <div className="space-y-2">
+          <Button
+            color="green"
+            fullWidth
+            onClick={() => handleUpdateStatus('CONFIRMED')}
+            disabled={updatingStatus}
+            className="flex items-center justify-center gap-2"
+          >
+            <CheckCircleIcon className="h-5 w-5" />
+            Confirm order
+          </Button>
+          <Button
+            color="red"
+            variant="outlined"
+            fullWidth
+            onClick={() => handleUpdateStatus('CANCELLED')}
+            disabled={updatingStatus}
+            className="flex items-center justify-center gap-2"
+          >
+            <XCircleIcon className="h-5 w-5" />
+            Cancel order
+          </Button>
+        </div>
+      );
+    }
+    
+    if (status === 'CONFIRMED') {
+      return (
+        <div className="space-y-2">
+          <Button
+            color="green"
+            fullWidth
+            onClick={() => handleUpdateStatus('COMPLETED')}
+            disabled={updatingStatus}
+            className="flex items-center justify-center gap-2"
+          >
+            <CheckCircleIcon className="h-5 w-5" />
+            Mark as completed
+          </Button>
+          <Button
+            color="red"
+            variant="outlined"
+            fullWidth
+            onClick={() => handleUpdateStatus('CANCELLED')}
+            disabled={updatingStatus}
+            className="flex items-center justify-center gap-2"
+          >
+            <XCircleIcon className="h-5 w-5" />
+            Cancel order
+          </Button>
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   const handleBack = () => {
     navigate("/dashboard/orders"); 
+  };
+
+  // Helper function for text colors
+  const getStatusTextColor = (status) => {
+    const colorMap = {
+      PENDING: "text-amber-700",
+      CONFIRMED: "text-blue-700",
+      COMPLETED: "text-green-700",
+      CANCELLED: "text-red-700"
+    };
+    return colorMap[status] || "text-gray-700";
   };
 
   if (loading) {
@@ -658,7 +694,7 @@ export function OrderDetail() {
                 </Typography>
                 <div className="flex items-center gap-2 p-3 bg-blue-gray-50 rounded-lg">
                   <div className={`h-3 w-3 rounded-full bg-${getStatusColor(order.status)}-500`}></div>
-                  <Typography variant="h6" className={`font-bold text-${getStatusColor(order.status)}-700`}>
+                  <Typography variant="h6" className={getStatusTextColor(order.status)}>
                     {getStatusText(order.status)}
                   </Typography>
                 </div>
@@ -677,21 +713,42 @@ export function OrderDetail() {
                   Select other status:
                 </Typography>
                 <div className="grid grid-cols-2 gap-2">
-                  {STATUS_OPTIONS.map(option => (
-                    <Button
-                      key={option.value}
-                      variant="outlined"
-                      color={option.color}
-                      size="sm"
-                      fullWidth
-                      onClick={() => handleUpdateStatus(option.value)}
-                      disabled={order.status === option.value || updatingStatus}
-                      className="flex items-center justify-center gap-1"
-                    >
-                      {getStatusIcon(option.value)}
-                      {option.label}
-                    </Button>
-                  ))}
+                  {STATUS_OPTIONS.map(option => {
+                    const isCurrentStatus = order.status === option.value;
+                    const canChange = canChangeStatus(order.status, option.value);
+                    const isDisabled = isCurrentStatus || !canChange || updatingStatus;
+                    
+                    return (
+                      <Tooltip 
+                        key={option.value}
+                        content={
+                          isCurrentStatus 
+                            ? `Current status` 
+                            : !canChange 
+                            ? `Cannot change from ${getStatusText(order.status)} to ${option.label}`
+                            : `Change to ${option.label}`
+                        }
+                      >
+                        <div>
+                          <Button
+                            variant="outlined"
+                            color={option.color}
+                            size="sm"
+                            fullWidth
+                            onClick={() => handleUpdateStatus(option.value)}
+                            disabled={isDisabled}
+                            className="flex items-center justify-center gap-1"
+                          >
+                            {getStatusIcon(option.value)}
+                            {option.label}
+                            {isCurrentStatus && (
+                              <span className="ml-1 text-xs">(Current)</span>
+                            )}
+                          </Button>
+                        </div>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               </div>
               
