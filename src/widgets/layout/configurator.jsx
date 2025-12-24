@@ -55,13 +55,13 @@ export function Configurator() {
     pink: "from-pink-400 to-pink-600",
   };
 
-  React.useEffect(() => {
-    const stars = fetch(
-      "https://api.github.com/repos/creativetimofficial/material-tailwind-dashboard-react"
-    )
-      .then((response) => response.json())
-      .then((data) => setStars(formatNumber(data.stargazers_count, 1)));
-  }, []);
+//   React.useEffect(() => {
+//     const stars = fetch(
+//       "https://api.github.com/repos/creativetimofficial/material-tailwind-dashboard-react"
+//     )
+//       .then((response) => response.json())
+//       .then((data) => setStars(formatNumber(data.stargazers_count, 1)));
+//   }, []);
 
   return (
     <aside
