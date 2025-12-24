@@ -239,8 +239,8 @@ export function OrderList() {
     if (!canChangeStatus(order.status, newStatus)) {
       const currentStatusText = getStatusText(order.status);
       const newStatusText = getStatusText(newStatus);
-      console.log(
-        `Cannot change order status from "${currentStatusText}" to "${newStatusText}"\n\n` +
+      alert(
+        `❌ Cannot change order status from "${currentStatusText}" to "${newStatusText}"\n\n` +
         `Valid transitions:\n` +
         `• PENDING → CONFIRMED, CANCELLED\n` +
         `• CONFIRMED → COMPLETED, CANCELLED\n` +
@@ -259,12 +259,41 @@ export function OrderList() {
       setUpdatingId(orderId);
       await OrderService.updateOrderStatus(orderId, newStatus);
 
-      // Cập nhật state
-      setOrders(prev =>
-        prev.map(o =>
-          o.id === orderId ? { ...o, status: newStatus } : o
-        )
+      // Cập nhật state orders
+      const updatedOrders = orders.map(o =>
+        o.id === orderId ? { ...o, status: newStatus } : o
       );
+      
+      setOrders(updatedOrders);
+      
+      // Tự động filter lại orders sau khi update
+      let filtered = [...updatedOrders];
+      
+      // Filter by status
+      if (selectedStatus !== 'ALL') {
+        filtered = filtered.filter(order => order.status === selectedStatus);
+      }
+
+      // Filter by search keyword
+      if (searchTerm.trim() !== "") {
+        const term = searchTerm.toLowerCase();
+        filtered = filtered.filter(order => 
+          order.orderCode.toLowerCase().includes(term) ||
+          order.customerName.toLowerCase().includes(term) ||
+          order.customerEmail.toLowerCase().includes(term) ||
+          order.customerPhone.toLowerCase().includes(term) ||
+          order.address.toLowerCase().includes(term)
+        );
+      }
+
+      // Sort by date
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0);
+        const dateB = new Date(b.createdAt || 0);
+        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+      });
+
+      setFilteredOrders(filtered);
 
       // Hiển thị thông báo thành công
       alert(`✅ Order status updated successfully!\nFrom: ${getStatusText(order.status)}\nTo: ${getStatusText(newStatus)}`);
